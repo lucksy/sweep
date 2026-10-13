@@ -15,7 +15,7 @@ export function parseScan(run: { exitCode: number; stdout: string; stderr: strin
   return JSON.parse(run.stdout) as ScanResult
 }
 
-export const reclaimable = (scan: ScanResult) => scan.categories.reduce((total, c) => total + (c.reclaimable ?? 0), 0)
+export const reclaimable = (scan: ScanResult) => scan.categories.reduce((total, c) => total + (c.reclaimableBytes ?? 0), 0)
 
 export function formatBytes(bytes: number): string {
   const units = ['B', 'K', 'M', 'G', 'T']

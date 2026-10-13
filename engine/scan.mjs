@@ -1,0 +1,86 @@
+// scan(): every category, measured and explained, as the schema-1 contract
+// every other part of sweep reads (SPEC-engine §Contract).
+
+import fs from 'node:fs';
+import path from 'node:path';
+
+import { CATEGORIES } from './categories/index.mjs';
+import { fmt, itemId, readJson } from './fsx.mjs';
+
+export const SCHEMA = 1;
+const VERSION = readJson(new URL('../.claude-plugin/plugin.json', import.meta.url))?.version ?? '0.0.0';
+
+// One item as the contract carries it; what the cleaner needs rides along unseen by JSON.
+function contractItem(category, raw) {
+  const item = {
+    id: itemId(category, raw.path),
+    path: raw.path,
+    label: raw.label ?? path.basename(raw.path),
+    bytes: raw.bytes,
+    ageDays: raw.ageDays == null ? null : Math.floor(raw.ageDays),
+    project: raw.project ?? null,
+    cleanable: raw.cleanable,
+    reason: raw.cleanable ? null : raw.reason ?? 'kept',
+    note: raw.note ?? '',
+    detail: raw.detail ?? {},
+  };
+  Object.defineProperty(item, 'internal', { value: raw.internal ?? {}, enumerable: false });
+  return item;
+}
+
+async function scanCategory(ctx, cat) {
+  let items = [];
+  let error = null;
+  try {
+    items = (await cat.scan(ctx)).map((raw) => contractItem(cat.id, raw));
+  } catch (e) {
+    error = e.message;
+  }
+  items.sort((a, b) => b.bytes - a.bytes);
+  const cleanable = items.filter((i) => i.cleanable);
+  const result = {
+    id: cat.id, title: cat.title, group: cat.group, risk: cat.risk, text: cat.text(ctx),
+    foundBytes: items.reduce((t, i) => t + i.bytes, 0),
+    reclaimableBytes: cleanable.reduce((t, i) => t + i.bytes, 0),
+    found: items.length, cleanable: cleanable.length, error, items,
+  };
+  Object.defineProperty(result, 'clean', { value: cat.clean, enumerable: false });
+  return result;
+}
+
+function info(ctx) {
+  const settings = readJson(path.join(ctx.claudeDir, 'settings.json')) ?? {};
+  const projects = Object.keys(ctx.claudeJson().projects ?? {});
+  const missing = projects.filter((p) => !fs.existsSync(p));
+  const size = (p) => { try { return fs.statSync(p).size; } catch { return 0; } };
+  return [
+    { key: 'history.jsonl', value: fmt(size(path.join(ctx.claudeDir, 'history.jsonl'))), text: 'Your prompt history (up-arrow). Never swept. `claude purge <path>` drops one project\'s lines.' },
+    { key: '~/.claude.json', value: fmt(size(path.join(ctx.home, '.claude.json'))), text: `${projects.length} project entries, ${missing.length} for folders that no longer exist. Holds auth and MCP config; do not delete. \`claude purge <path>\` removes one entry.` },
+    { key: 'cleanupPeriodDays', value: String(settings.cleanupPeriodDays ?? '30 (default)'), text: 'Age at which Claude sweeps transcripts, file-history, temp scratchpads and idle agent worktrees. Lower it in ~/.claude/settings.json to keep less.' },
+    { key: 'kept on purpose', value: '', text: 'settings, credentials, CLAUDE.md, agent-memory/, jobs/, daemon/, skills/, projects/*/memory/. sweep never deletes these.' },
+  ];
+}
+
+export const categoryIds = () => CATEGORIES.map((c) => c.id);
+
+export async function scan(ctx, { ids = null, options = {} } = {}) {
+  const started = Date.now();
+  const categories = [];
+  for (const cat of CATEGORIES.filter((c) => !ids || ids.includes(c.id))) categories.push(await scanCategory(ctx, cat));
+  const sum = (list, pick) => list.reduce((t, x) => t + pick(x), 0);
+  return {
+    schema: SCHEMA,
+    tool: { name: 'sweep', version: VERSION },
+    scannedAt: new Date(started).toISOString(),
+    durationMs: Date.now() - started,
+    options: { days: options.days ?? null, force: !!ctx.force },
+    host: { platform: process.platform, claudeDir: ctx.claudeDir, tmpRoot: ctx.tmpRoot, cliVersion: ctx.cliVersion() },
+    totals: {
+      reclaimableBytes: sum(categories, (c) => c.reclaimableBytes),
+      safeBytes: sum(categories.filter((c) => c.risk === 'safe'), (c) => c.reclaimableBytes),
+      keptBytes: sum(categories, (c) => c.foundBytes - c.reclaimableBytes),
+    },
+    categories,
+    info: info(ctx),
+  };
+}

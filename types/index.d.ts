@@ -13,7 +13,7 @@ export type ScanCategory = {
   id: string
   title?: string
   risk?: 'safe' | 'caution' | 'review'
-  reclaimable: number
+  reclaimableBytes: number
   items: ScanItem[]
 }
 export type ScanResult = { categories: ScanCategory[] }

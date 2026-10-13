@@ -92,7 +92,7 @@ While doing it, answer Q1–Q3 from `claude-code.d.ts` and a quick experiment, a
 **Notes:** The guard also resolves parent-folder symlinks, so a folder inside ~/.claude that links to ~/Documents can't be used to delete outside (a gap in the clearx prototype).
 
 ## Task 4: JSON contract schema 1: categories in files, reason codes, stable item ids
-**Status:** todo
+**Status:** done · started 2026-10-13 · done 2026-10-13
 
 **Description:** Split the engine per SPEC.md Project Structure:
 - `scan.mjs`, `git.mjs`, `live.mjs`, `fsx.mjs`
@@ -101,18 +101,20 @@ While doing it, answer Q1–Q3 from `claude-code.d.ts` and a quick experiment, a
 Make `scan --json` emit the schema-1 contract (SPEC-engine §Contract). Add `reason` codes to every kept item, plus stable `id`, `label`, `project` and `detail`. This is a mostly mechanical move; behavior is unchanged except for the new fields.
 
 **Acceptance criteria:**
-- [ ] A contract test checks every key and type of `scan --json` against the fixture
-- [ ] Every kept row of the SPEC-engine category table returns its reason code in the sandbox
-- [ ] Item ids are identical across two scans of an unchanged fixture
+- [x] A contract test checks every key and type of `scan --json` against the fixture
+- [x] Every kept row of the SPEC-engine category table returns its reason code in the sandbox
+- [x] Item ids are identical across two scans of an unchanged fixture
 
 **Verification:**
-- [ ] `node --test "tests/engine/*.test.mjs"`
+- [x] `node --test "tests/engine/*.test.mjs"`
 
 **Dependencies:** T3
 
 **Files likely touched:** `engine/scan.mjs`, `engine/git.mjs`, `engine/live.mjs`, `engine/fsx.mjs`, `engine/categories/*.mjs` (13 small files, moved verbatim), `tests/engine/contract.test.mjs`
 
 **Estimated scope:** L (mechanical; if it runs long, split into T4 "infra modules" and a new task "category files")
+
+**Notes:** Items kept for a running session (temp folders, transcripts, checkpoints, the running CLI's bundled skills) are now listed with their reason instead of skipped; on this machine tmp-sessions shows 93/101 where clearx showed 93/93. Category scans are async so T6 can size in parallel. git worktree removal is checked by the guard first (ctx.check).
 
 ## Task 5: Footprint, disk, per-project rollup, age buckets, warnings
 **Status:** todo

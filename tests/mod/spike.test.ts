@@ -4,8 +4,8 @@ import { world, run, PANE_PROPS } from './world'
 
 const SCAN = {
   categories: [
-    { id: 'worktrees', reclaimable: 2_899_102_105, items: [] },
-    { id: 'tmp-sessions', reclaimable: 382_730_240, items: [] },
+    { id: 'worktrees', reclaimableBytes: 2_899_102_105, items: [] },
+    { id: 'tmp-sessions', reclaimableBytes: 382_730_240, items: [] },
   ],
 }
 
@@ -38,7 +38,7 @@ test('a scan four times the size of a real one (~300 KB) fits in session state',
     path: `/Users/someone/Projects/project-${i}/.claude/worktrees/agent-${'a'.repeat(40)}`,
     bytes: 1_000_000, note: 'clean, nothing unsaved · node_modules 1.0G · 23d old', cleanable: true,
   }))
-  const seen = world(on, { scan: { categories: [{ id: 'worktrees', reclaimable: 1_500_000_000, items }] } })
+  const seen = world(on, { scan: { categories: [{ id: 'worktrees', reclaimableBytes: 1_500_000_000, items }] } })
   await $.session.start({ cwd: '/p', surface: 'terminal', isInteractive: true } as never)
   await $.command.run(run())
   await seen.clock.settle()
