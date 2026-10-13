@@ -10,6 +10,7 @@ import { cleanArgv, formatBytes, parseClean, parseScan, progressOf, scanArgv, ta
 import { resolveStyle, type ChartStyle, type TerminalEnv } from '../charts/terminal'
 import { ago, onlyIds, projectSelection, safeIds, selectedIds, toggle, toggleItem } from './pane/model'
 import { Projects, Tabs } from './pane/projects'
+import { parseSweep } from './pane/command'
 import { Category } from './pane/category'
 import { CleanBar } from './pane/clean'
 import { Overview } from './pane/overview'
@@ -142,17 +143,17 @@ async function ensureScan($: EngineInterface, force = false) {
   if (force || at === null || now - at > FRESH_MS) void rescan($)
 }
 
-async function openPane($: EngineInterface, { force = false } = {}): Promise<{ text: string }> {
+async function openPane($: EngineInterface, { force = false } = {}): Promise<{ text: string; placed: boolean }> {
   const placed = await $.ui.open(OPEN)
   if (!placed.isPlaced) {
     const run = await $.process.run(textArgv($.plugin.root), { timeoutMs: 5 * 60_000, env: { NO_COLOR: '1' } })
-    return { text: `Pane needs ≥ 110 columns; showing text.\n${run.stdout}` }
+    return { text: `Pane needs ≥ 110 columns; showing text.\n${run.stdout}`, placed: false }
   }
   await ensureScan($, force)
   const result = await read($, scanned)
   const at = await read($, scannedAt)
   const now = await $.clock.now()
-  return { text: result && at !== null ? `Sweep pane opened · ${formatBytes(result.totals.reclaimableBytes)} reclaimable (scanned ${ago(now - at)})` : 'Sweep pane opened · scanning…' }
+  return { text: result && at !== null ? `Sweep pane opened · ${formatBytes(result.totals.reclaimableBytes)} reclaimable (scanned ${ago(now - at)})` : 'Sweep pane opened · scanning…', placed: true }
 }
 
 export const register: Register = (on, options) => {
@@ -174,8 +175,35 @@ export const register: Register = (on, options) => {
   })
 
   on('command.run', { command: 'sweep' }, async ($, e) => {
-    const [sub] = String(e.args ?? '').trim().split(/\s+/)
-    return openPane($, { force: sub === 'scan' })
+    const command = parseSweep(String(e.args ?? ''))
+    if (command.kind === 'error') return { text: command.text }
+    if (command.kind === 'text') {
+      const run = await $.process.run(textArgv($.plugin.root, command.args), { timeoutMs: 5 * 60_000, env: { NO_COLOR: '1' } })
+      return { text: run.stdout || run.stderr }
+    }
+    const opened = await openPane($, { force: command.kind === 'scan' })
+    if (!opened.placed) return { text: opened.text }
+    if (command.kind === 'explain') {
+      await update($, focusId, () => command.id)
+      await update($, view, () => 'category')
+      return { text: `${opened.text} · ${command.id}` }
+    }
+    if (command.kind === 'clean') {
+      // Tick the categories once a scan is there, then dry-run them: the pane lands on the confirm step.
+      void (async () => {
+        if (inflight) await inflight
+        const scan = await read($, scanned)
+        if (!scan) return
+        const ids = command.ids === 'safe' ? safeIds(scan) : command.ids
+        await update($, selected, () => ids)
+        await update($, selectedItems, () => ({}))
+        await update($, projectFilter, () => null)
+        await update($, view, () => 'overview')
+        await startClean($)
+      })()
+      return { text: `${opened.text} · checking what cleaning ${command.ids === 'safe' ? 'the safe categories' : command.ids.join(', ')} would remove` }
+    }
+    return { text: opened.text }
   })
 
   on('ui.render', { component: 'Pane', requestId: PANE }, async ($, e) => {

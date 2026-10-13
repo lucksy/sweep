@@ -449,23 +449,25 @@ Remove the old `skills/list` and `skills/clearx`.
 **Notes:** Picking a project selects exactly its cleanable items (review categories excluded) and returns to the overview with a 'Selected: the items of …' line and Clear (x); a whole-category tick, Select safe or a finished clean ends the filter. Tabs are Buttons on 1 and 2.
 
 ## Task 19: `/sweep` arguments: scan, clean, explain, text
-**Status:** todo
+**Status:** done · started 2026-10-13 · done 2026-10-13
 
 **Description:** Route `/sweep scan | clean <ids> | explain <id> | text …` per SPEC-pane §Entry points, with the one-line command outputs.
 
 **Acceptance criteria:**
-- [ ] Each argument form opens the right view and state (`clean` lands on confirm with those categories ticked)
-- [ ] An unknown category answers with the list of ids
-- [ ] `text` answers with the CLI text and opens no pane
+- [x] Each argument form opens the right view and state (`clean` lands on confirm with those categories ticked)
+- [x] An unknown category answers with the list of ids
+- [x] `text` answers with the CLI text and opens no pane
 
 **Verification:**
-- [ ] `claude plugin test .`
+- [x] `claude plugin test .`
 
 **Dependencies:** T16, T17
 
 **Files likely touched:** `hooks/register.tsx`, `hooks/pane/command.ts`, `hooks/command.test.ts`
 
 **Estimated scope:** S
+
+**Notes:** /sweep clean <review id> answers that it needs --force in chat; /sweep clean and explain stop at the text report when the pane can't be placed.
 
 ## Checkpoint D: Pane
 - [ ] Manual checklist from SPEC-pane: Ghostty and Terminal.app, 110 / 144 / 200 columns, mouse and keys
