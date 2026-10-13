@@ -89,6 +89,18 @@ Without `--yes`, `clean` is a dry run.
 | `bandThresholdGB` | `5` | How much reclaimable space, in GB, brings up the line above the prompt |
 | `scanRoots` | (empty) | Folders searched for worktrees of repos Claude no longer lists; `off` turns the search off |
 
+## What sweep runs, reads and sends
+
+sweep works only on your machine. It makes no network calls, and nothing it reads leaves the computer.
+
+- **Programs it starts:**
+  - `node <plugin folder>/engine/sweep.mjs` with `scan`, `explain` or `clean` and the flags listed above. This is sweep's own engine; the pane and the text report run it.
+  - From the engine: `du -k` to measure sizes, `df` for free disk space, and `git` to check worktrees and branches (read: `worktree list`, `status`, `rev-parse`, `rev-list`, `for-each-ref`; on a confirmed clean: `worktree remove`, `worktree prune`, `branch -D`).
+  - When you choose Trash: `/usr/bin/trash` (macOS) or `gio trash` (Linux).
+  - When you press **reveal**: `open -R <path>` (macOS) or `xdg-open <folder>` (Linux).
+- **What it reads:** file and folder sizes and dates under `~/.claude`, `~/.claude.json`, Claude Code's temp folder, the CLI install folder, and the git repos Claude Code has worked in. It never reads the conversation. It never reads credentials: `.credentials.json` appears in the code only in the list of paths that are never deleted.
+- **What it sends:** nothing leaves your machine. **copy** puts one item's path on your clipboard. **ask Claude** submits one prompt to your own Claude session: the worktree's or branch's path, the repo path and branch name, and read-only `git status`, `git log` and `git diff --stat` steps, with an instruction not to change anything.
+
 ## License
 
 MIT
