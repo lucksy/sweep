@@ -71,23 +71,25 @@ While doing it, answer Q1–Q3 from `claude-code.d.ts` and a quick experiment, a
 - [ ] Q1–Q3 answered; human review before Phase 1
 
 ## Task 3: Guard rails as their own module, with tests that try to break them
-**Status:** todo
+**Status:** done · started 2026-10-13 · done 2026-10-13
 
 **Description:** Extract `rm()` into `engine/guard.mjs`, with the allowlist and protected paths of SPEC-engine §Behavior 5. Add a table-driven test that tries every protected path, paths outside the allowlist, `..` traversal, symlinks pointing out of the allowlist, and `~/.claude.json` itself.
 
 **Acceptance criteria:**
-- [ ] Every protected path and every outside path is refused, with a clear error
-- [ ] A symlink inside `~/.claude` pointing at `~/Documents` is removed as a link, and its target is untouched
-- [ ] Allowed paths are removed
+- [x] Every protected path and every outside path is refused, with a clear error
+- [x] A symlink inside `~/.claude` pointing at `~/Documents` is removed as a link, and its target is untouched
+- [x] Allowed paths are removed
 
 **Verification:**
-- [ ] `node --test "tests/engine/*.test.mjs"guard.test.mjs`
+- [x] `node --test "tests/engine/*.test.mjs"guard.test.mjs`
 
 **Dependencies:** T1
 
 **Files likely touched:** `engine/guard.mjs`, `engine/sweep.mjs`, `tests/engine/guard.test.mjs`
 
 **Estimated scope:** S
+
+**Notes:** The guard also resolves parent-folder symlinks, so a folder inside ~/.claude that links to ~/Documents can't be used to delete outside (a gap in the clearx prototype).
 
 ## Task 4: JSON contract schema 1: categories in files, reason codes, stable item ids
 **Status:** todo

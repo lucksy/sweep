@@ -7,6 +7,8 @@ import os from 'node:os';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 
+import { createGuard } from './guard.mjs';
+
 const HOME = os.homedir();
 const CLAUDE_DIR = process.env.CLAUDE_CONFIG_DIR || path.join(HOME, '.claude');
 const TMP_BASE = process.env.CLAUDE_CODE_TMPDIR || (process.platform === 'darwin' ? '/private/tmp' : '/tmp');
@@ -488,24 +490,8 @@ function orphanProjects() {
 
 // ---------- deletion with guard rails
 
-const PROTECTED = [
-  'settings.json', 'settings.local.json', '.credentials.json', 'CLAUDE.md', 'agent-memory', 'jobs', 'daemon',
-  'history.jsonl', 'plugins/installed_plugins.json', 'plugins/known_marketplaces.json', 'skills', 'commands', 'agents',
-].map((p) => path.join(CLAUDE_DIR, p));
-
-function rm(p) {
-  const abs = path.resolve(p);
-  const allowedRoots = [CLAUDE_DIR, TMP_ROOT, CLI_VERSIONS];
-  const inRoot = allowedRoots.some((r) => abs.startsWith(r + path.sep))
-    || (path.dirname(abs) === TMP_BASE && /^claude-[0-9a-f]+-cwd$/.test(path.basename(abs)));
-  const isWorktree = abs.includes(`${path.sep}.claude${path.sep}worktrees${path.sep}`);
-  const isConfigCopy = path.dirname(abs) === HOME && /^\.claude\.json\..+/.test(path.basename(abs));
-  if (!(inRoot || isWorktree || isConfigCopy)) throw new Error(`refusing to delete outside known Claude locations: ${abs}`);
-  if (PROTECTED.some((q) => abs === q || abs.startsWith(q + path.sep))) throw new Error(`refusing to delete protected path: ${abs}`);
-  if (/\/projects\/[^/]+\/memory(\/|$)/.test(abs)) throw new Error(`refusing to delete auto-memory: ${abs}`);
-  if (abs === path.join(HOME, '.claude.json')) throw new Error('refusing to delete ~/.claude.json');
-  fs.rmSync(abs, { recursive: true, force: true });
-}
+const guard = createGuard({ home: HOME, claudeDir: CLAUDE_DIR, tmpBase: TMP_BASE, tmpRoot: TMP_ROOT, cliVersions: CLI_VERSIONS });
+const rm = (p) => guard.rm(p);
 
 // ---------- report-only facts
 
