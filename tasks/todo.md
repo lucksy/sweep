@@ -641,20 +641,22 @@ Remove the old `skills/list` and `skills/clearx`.
 **Notes:** reveal and copy are plain, dim buttons on every item row (kept items too), in the category and project views.
 
 ## Task 27: Ask Claude about a worktree (#10)
-**Status:** todo
+**Status:** done · started 2026-10-13 · done 2026-10-13
 
 **Description:** an ask button on worktree items, and on branch items with unique commits, that submits a read-only review prompt to Claude.
 
 **Acceptance criteria:**
-- [ ] The prompt names the path or branch, asks for status, log and diff stat, and says not to delete anything
-- [ ] It is submitted with `$.prompt.submit`, and a toast confirms it
-- [ ] There is no ask button on non-worktree items
+- [x] The prompt names the path or branch, asks for status, log and diff stat, and says not to delete anything
+- [x] It is submitted with `$.prompt.submit`, and a toast confirms it
+- [x] There is no ask button on non-worktree items
 
 **Verification:**
-- [ ] `claude plugin test .`
+- [x] `claude plugin test .`
 
 **Dependencies:** T26
 
 **Files likely touched:** `hooks/pane/item-actions.tsx`, `hooks/register.tsx`, `tests/mod/actions.test.ts`
 
 **Estimated scope:** S
+
+**Notes:** The ask button sits on worktree items (kept ones too, where it helps most) and on worktree-* branches holding commits found on no other branch; orphan folders have none. The prompt is read-only and ends by asking whether the worktree is safe to remove with /sweep.

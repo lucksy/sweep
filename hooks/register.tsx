@@ -11,7 +11,7 @@ import { resolveStyle, type ChartStyle, type TerminalEnv } from '../charts/termi
 import { ago, onlyIds, projectSelection, safeIds, selectedIds, toggle, toggleItem } from './pane/model'
 import { Projects, Tabs } from './pane/projects'
 import { Project } from './pane/project'
-import { itemPath, revealArgv } from './pane/item-actions'
+import { askPrompt, itemPath, revealArgv } from './pane/item-actions'
 import { parseSweep } from './pane/command'
 import { BACKGROUND_DELAY_MS, statusText } from './alerts/status'
 import { bandFor } from './alerts/band'
@@ -309,6 +309,10 @@ export const register: Register = (on, options) => {
       copy: (item: ScanItem) => void (async () => {
         await $.ui.copy({ text: itemPath(item) })
         $.ui.toast(`Copied ${itemPath(item)}`)
+      })(),
+      ask: (item: ScanItem, categoryId: string) => void (async () => {
+        await $.prompt.submit({ text: askPrompt(item, categoryId) })
+        $.ui.toast(`Asked Claude about ${item.label}`)
       })(),
     }
     const currentView = await read($, view)

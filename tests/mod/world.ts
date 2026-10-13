@@ -29,6 +29,7 @@ export function world(on: On, engine: Engine = {}, env: Record<string, string> =
     status: [] as (string | undefined)[],
     toasts: [] as string[],
     copied: [] as string[],
+    prompts: [] as string[],
     runs: [] as string[][],
     spawns: [] as string[][],
     writes: [] as string[],
@@ -74,6 +75,10 @@ export function world(on: On, engine: Engine = {}, env: Record<string, string> =
   on('ui.toast', (_$, e) => {
     seen.toasts.push(e.text)
     return { value: undefined }
+  })
+  on('prompt.submit', (_$, e) => {
+    seen.prompts.push(String((e as { text?: unknown }).text ?? ''))
+    return { text: (e as { text?: string }).text ?? '' } as never
   })
   on('ui.copy', (_$, e) => {
     seen.copied.push(e.text)

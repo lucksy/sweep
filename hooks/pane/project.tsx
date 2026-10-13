@@ -75,7 +75,7 @@ export function Project(E: El, d: ProjectData, a: ProjectActions) {
                 <Text wrap="truncate-middle">{item.label}</Text>
                 <Text dimColor wrap="truncate-end">{item.cleanable ? item.note : `kept: ${REASONS[item.reason ?? ''] ?? item.reason}`}</Text>
               </Box>
-              {ItemButtons(E, item, a)}
+              {ItemButtons(E, item, c.id, a)}
             </Box>
           ))}
         </Box>

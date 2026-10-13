@@ -37,7 +37,7 @@ For the shell command in your own terminal: `ln -s ~/Projects/clear/bin/sweep ~/
 | `/sweep explain plugin-versions` | The pane, on that category |
 | `/sweep text` | The text report, with no pane (also used automatically below 110 columns) |
 | `/sweep:scan`, `/sweep:clean`, `/sweep:explain` | Claude runs the scan, explains it, and asks before deleting |
-| `sweep scan --details` · `sweep clean safe --yes` | The same from a terminal; `--json` for scripts |
+| `sweep scan --details` · `sweep clean safe --yes` | The same from a terminal; `--trash` to move to the Trash, `--roots a,b` for where to look, `--json` for scripts |
 
 **In the pane:**
 
@@ -52,7 +52,7 @@ For the shell command in your own terminal: `ln -s ~/Projects/clear/bin/sweep ~/
 | `b` | Back from a category |
 | `x` | Clear a project filter |
 
-Press `›` on a row to see that category's items, tick single items, and see the age of its space.
+Press `›` on a row to see that category's items, tick single items, and see the age of its space. Every item has **reveal** (Finder) and **copy** (its path); worktrees, and branches holding their own commits, also have **ask Claude**, which asks Claude to review the agent's work read-only and say whether it's safe to remove. On the confirm step, `t` moves to the Trash instead of deleting (the space returns when you empty it).
 
 **Without opening anything:**
 
@@ -88,6 +88,7 @@ Press `›` on a row to see that category's items, tick single items, and see th
 | `backgroundScan` | on | one read-only scan a minute after a session starts |
 | `statusLine` | on | the `sweep 3.5G` entry |
 | `bandThresholdGB` | 5 | reclaimable space that brings up the line above the prompt |
+| `scanRoots` | (empty) | folders searched for worktrees in repos Claude no longer lists; empty means `~/Projects`, `~/code`, `~/src`, `~/dev`, `~/work`, `~/Developer`, `~/repos`; `off` turns it off |
 
 ## Prevent it
 
