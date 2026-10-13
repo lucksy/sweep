@@ -14,5 +14,18 @@
     "node_modules",
     "maintenance"
   ],
-  "types": "./types/index.d.ts"
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "chartStyle": {
+      "type": "string",
+      "title": "Chart style",
+      "description": "auto: pictures in kitty and Ghostty, block and braille characters elsewhere. pixels: always pictures. cells: always characters.",
+      "options": [
+        "auto",
+        "pixels",
+        "cells"
+      ],
+      "default": "auto"
+    }
+  }
 }

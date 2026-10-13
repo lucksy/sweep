@@ -6,7 +6,8 @@ import type { Elements } from 'claude-code'
 
 import { formatBytes } from '../../charts/format'
 import type { Progress, ScanResult, ScanStatus } from '../../types'
-import { headline, selectable, selectedBytes } from './model'
+import { footprintChart, reclaimTreemap, ChartView, type DrawStyle } from './charts'
+import { headline, isWide, selectable, selectedBytes } from './model'
 
 export type El = Pick<Elements['terminal'], 'Box' | 'Text' | 'Button' | 'Markdown'> & Partial<Pick<Elements['terminal'], 'Raster' | 'Image'>>
 
@@ -20,6 +21,7 @@ export type OverviewData = {
   selectedItems: Record<string, string[]>
   bodyColumns: number
   freedThisSession: number
+  style: DrawStyle
 }
 
 export type OverviewActions = {
@@ -57,7 +59,7 @@ export function Header(E: El, d: OverviewData, a: Pick<OverviewActions, 'rescan'
         </Box>
       </Box>
       {(d.scan?.warnings ?? []).map((w, i) => (
-        <Text key={`warning-${i}`} color="error" wrap="truncate-end">{`⚠ ${w.text}`}</Text>
+        <Box key={`warning-${i}`}><Text color="error" wrap="truncate-end">{`⚠ ${w.text}`}</Text></Box>
       ))}
       {d.status === 'scanning' && ProgressLine(E, d.progress, d.bodyColumns)}
       {d.error && <Text color="error">{`Scan failed: ${d.error}`}</Text>}
@@ -113,13 +115,36 @@ export function SelectionBar(E: El, d: OverviewData, a: Pick<OverviewActions, 's
   )
 }
 
+/** Charts beside the table when the pane is wide, above it when narrow. */
 export function Overview(E: El, d: OverviewData, a: OverviewActions) {
   const { Box, Text } = E
+  const scan = d.scan
+  const wide = isWide(d.bodyColumns)
+  const width = Math.max(20, d.bodyColumns - 2)
+  const mapColumns = wide ? Math.floor(width * 0.42) : width
   return (
     <Box flexDirection="column" gap={1}>
       {Header(E, d, a)}
-      {!d.scan && d.status !== 'scanning' && !d.error && <Text dimColor>No scan yet. Press r to scan.</Text>}
-      {CategoryTable(E, d, a)}
+      {!scan && d.status !== 'scanning' && !d.error && <Text dimColor>No scan yet. Press r to scan.</Text>}
+      {scan && (
+        <Box key="footprint-section" flexDirection="column">
+          <Text bold>Footprint</Text>
+          {ChartView(E, footprintChart(scan, width, d.style), 'footprint')}
+        </Box>
+      )}
+      {scan && (
+        <Box key="body" flexDirection={wide ? 'row' : 'column'} gap={wide ? 3 : 1}>
+          {scan.totals.reclaimableBytes > 0 && (
+            <Box key="map-section" flexDirection="column" width={mapColumns}>
+              <Text bold>Reclaimable</Text>
+              {ChartView(E, reclaimTreemap(scan, mapColumns, wide ? 14 : 8, d.style), 'treemap')}
+            </Box>
+          )}
+          <Box key="table-section" flexDirection="column" flexGrow={1}>
+            {CategoryTable(E, d, a)}
+          </Box>
+        </Box>
+      )}
       {SelectionBar(E, d, a)}
     </Box>
   )

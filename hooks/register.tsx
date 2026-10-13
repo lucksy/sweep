@@ -3,10 +3,11 @@
 // All $ calls live in this file: the views it imports are pure.
 
 import { atom, read, update } from 'claude-code'
-import type { EngineInterface, Register } from 'claude-code'
+import type { Elements, EngineInterface, Register } from 'claude-code'
 
 import type { Flow, Progress, ScanResult, ScanStatus, View, CleanResult } from '../types'
 import { formatBytes, parseScan, progressOf, scanArgv, takeLines, textArgv } from './engine-client'
+import { resolveStyle, type ChartStyle, type TerminalEnv } from '../charts/terminal'
 import { ago, safeIds, toggle } from './pane/model'
 import { Overview } from './pane/overview'
 
@@ -30,6 +31,8 @@ const freed = atom({ plugin: 'sweep', key: 'freedThisSession' } as const, 0)
 
 // The scan in flight, so a second request joins it instead of starting another.
 let inflight: Promise<void> | null = null
+// What the terminal is, read once per session start: whether it draws pictures.
+let terminal: TerminalEnv = {}
 
 function rescan($: EngineInterface): Promise<void> {
   inflight ??= runScan($).finally(() => { inflight = null })
@@ -92,8 +95,16 @@ async function openPane($: EngineInterface, { force = false } = {}): Promise<{ t
   return { text: result && at !== null ? `Sweep pane opened · ${formatBytes(result.totals.reclaimableBytes)} reclaimable (scanned ${ago(now - at)})` : 'Sweep pane opened · scanning…' }
 }
 
-export const register: Register = (on) => {
+export const register: Register = (on, options) => {
+  const chartStyle = (options.chartStyle ?? 'auto') as ChartStyle
+
   on('session.start', async ($, e, next) => {
+    terminal = {
+      term: await $.env.get('TERM'),
+      termProgram: await $.env.get('TERM_PROGRAM'),
+      kitty: await $.env.get('KITTY_WINDOW_ID'),
+      tmux: await $.env.get('TMUX'),
+    }
     await $.command.register({
       name: 'sweep',
       description: 'Open the sweep pane: what Claude Code stores and what you can free',
@@ -108,8 +119,14 @@ export const register: Register = (on) => {
   })
 
   on('ui.render', { component: 'Pane', requestId: PANE }, async ($, e) => {
-    const { Box, Text, Button, Markdown } = $.ui.resolve(e)
-    const E = { Box, Text, Button, Markdown }
+    const els = $.ui.resolve(e)
+    const { Box, Text, Button, Markdown } = els
+    // Every surface's table names every element (missing ones draw nothing);
+    // only the terminal draws Raster and Image.
+    const terminalEls = e.surface === 'terminal' ? (els as Elements['terminal']) : null
+    const Raster = terminalEls?.Raster
+    const Image = terminalEls?.Image
+    const E = { Box, Text, Button, Markdown, Raster, Image }
     const result = await read($, scanned)
     const at = await read($, scannedAt)
     const now = await $.clock.now()
@@ -123,6 +140,7 @@ export const register: Register = (on) => {
       selectedItems: await read($, selectedItems),
       bodyColumns: e.props.bodyColumns,
       freedThisSession: await read($, freed),
+      style: resolveStyle(chartStyle, terminal, !!Raster),
     }
     return Overview(E, data, {
       rescan: () => void rescan($),

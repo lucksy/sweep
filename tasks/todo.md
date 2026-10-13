@@ -356,26 +356,28 @@ Remove the old `skills/list` and `skills/clearx`.
 **Notes:** Views are pure functions in hooks/pane/ that receive the surface's elements, the data and callbacks; register.tsx makes every $ call. The scan streams through $.process.spawn with NDJSON progress; a second request joins the one in flight; a scan in this session younger than 10 minutes is reused. The manual /sweep check moves to Checkpoint D.
 
 ## Task 15: Pane charts: footprint bar, treemap, bars; cells or pixels
-**Status:** todo
+**Status:** done · started 2026-10-13 · done 2026-10-13
 
 **Description:** Place the stacked bar, treemap and category bars in Overview:
 - `Raster` for cells, `Image` for pixels, chosen by `chartStyle` (and Q2's terminal detection)
 - text equivalents on surfaces without `Raster`
 
 **Acceptance criteria:**
-- [ ] `chartStyle: cells` draws Rasters and `pixels` draws Images with the chart's `alt`
-- [ ] A non-terminal surface render draws the legend and alt as `Text` (test with `e.surface = 'desktop'`)
-- [ ] Charts resize with the viewport, never wider than the pane
+- [x] `chartStyle: cells` draws Rasters and `pixels` draws Images with the chart's `alt`
+- [x] A non-terminal surface render draws the legend and alt as `Text` (test with `e.surface = 'desktop'`)
+- [x] Charts resize with the viewport, never wider than the pane
 
 **Verification:**
-- [ ] `claude plugin test .`
-- [ ] Manual: Ghostty (pixels) and Terminal.app (cells)
+- [x] `claude plugin test .`
+- [ ] Manual: Ghostty (pixels) and Terminal.app (cells) (Checkpoint D)
 
 **Dependencies:** T11, T14
 
 **Files likely touched:** `hooks/pane/charts.tsx`, `hooks/pane/overview.tsx`, `.claude-plugin/plugin.json` (userConfig), `hooks/pane.test.ts`
 
 **Estimated scope:** S
+
+**Notes:** Every surface's element table names every element (the missing ones draw nothing), so the pane decides Raster/Image by e.surface === 'terminal'. Text takes no key, so keyed fallbacks are Boxes. Overview shows the footprint bar and the reclaimable treemap; the category bar list is used by the Projects view (T18). Manual Ghostty / Terminal.app check is at Checkpoint D.
 
 ## Task 16: Pane clean flow: select, dry run, confirm, progress, done
 **Status:** todo
