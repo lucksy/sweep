@@ -38,6 +38,12 @@
       "title": "Status line entry",
       "description": "Show \"sweep 3.5G\" (reclaimable) in the status line after a scan; \u26a0 when a warning is active.",
       "default": true
+    },
+    "bandThresholdGB": {
+      "type": "number",
+      "title": "Band threshold (GB)",
+      "description": "Show a line above the prompt when this much space or more is reclaimable. Runaway task output, low disk and paused cleanup show regardless.",
+      "default": 5
     }
   }
 }

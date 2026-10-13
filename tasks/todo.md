@@ -499,7 +499,7 @@ Remove the old `skills/list` and `skills/clearx`.
 **Notes:** The background scan runs through the same rescan() the pane uses, so a pane scan in flight is joined, and its result is the pane's. A hot reload of the mod is a fresh module and schedules one more background scan; nothing is persisted to prevent that (sweep stores nothing).
 
 ## Task 21: Band above the prompt: conditions, hide, return
-**Status:** todo
+**Status:** done · started 2026-10-13 · done 2026-10-13
 
 **Description:** An `AbovePrompt` render per SPEC-alerts §3:
 - the five conditions, most severe first
@@ -509,18 +509,20 @@ Remove the old `skills/list` and `skills/clearx`.
 - the `bandThresholdGB` setting (type per Q1)
 
 **Acceptance criteria:**
-- [ ] One test per condition, plus a precedence test
-- [ ] Hide holds for the session, and the band returns only for a more severe condition
-- [ ] The band draws nothing while `hasSurvey` is set
+- [x] One test per condition, plus a precedence test
+- [x] Hide holds for the session, and the band returns only for a more severe condition
+- [x] The band draws nothing while `hasSurvey` is set
 
 **Verification:**
-- [ ] `claude plugin test .`
+- [x] `claude plugin test .`
 
 **Dependencies:** T20
 
 **Files likely touched:** `hooks/alerts/band.tsx`, `hooks/register.tsx`, `.claude-plugin/plugin.json`, `hooks/band.test.ts`
 
 **Estimated scope:** M
+
+**Notes:** Severity order: runaway output, low disk, cleanup paused, reclaimable over the threshold, many worktrees (SPEC-alerts lists the threshold first in its table but asks for the most severe). Open is o, Hide is h. bandThresholdGB is a number setting (Q1).
 
 ## Task 22: Toasts: clean finished (pane and skill), runaway output
 **Status:** todo

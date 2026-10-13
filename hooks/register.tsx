@@ -12,6 +12,7 @@ import { ago, onlyIds, projectSelection, safeIds, selectedIds, toggle, toggleIte
 import { Projects, Tabs } from './pane/projects'
 import { parseSweep } from './pane/command'
 import { BACKGROUND_DELAY_MS, statusText } from './alerts/status'
+import { bandFor } from './alerts/band'
 import { Category } from './pane/category'
 import { CleanBar } from './pane/clean'
 import { Overview } from './pane/overview'
@@ -34,6 +35,7 @@ const flow = atom({ plugin: 'sweep', key: 'flow' } as const, 'idle' as Flow)
 const dry = atom({ plugin: 'sweep', key: 'dry' } as const, null as CleanResult | null)
 const freed = atom({ plugin: 'sweep', key: 'freedThisSession' } as const, 0)
 const projectFilter = atom({ plugin: 'sweep', key: 'projectFilter' } as const, null as string | null)
+const hidden = atom({ plugin: 'sweep', key: 'hidden' } as const, [] as string[])
 const outcome = atom({ plugin: 'sweep', key: 'result' } as const, null as CleanResult | null)
 const cleaning = atom({ plugin: 'sweep', key: 'cleaning' } as const, null as { removed: number; freed: number } | null)
 const cleanError = atom({ plugin: 'sweep', key: 'cleanError' } as const, null as string | null)
@@ -166,6 +168,7 @@ export const register: Register = (on, options) => {
   const chartStyle = (options.chartStyle ?? 'auto') as ChartStyle
   statusLineOn = options.statusLine !== false
   const backgroundScan = options.backgroundScan !== false
+  const thresholdGB = typeof options.bandThresholdGB === 'number' ? options.bandThresholdGB : 5
 
   on('session.start', async ($, e, next) => {
     terminal = {
@@ -217,6 +220,21 @@ export const register: Register = (on, options) => {
       return { text: `${opened.text} · checking what cleaning ${command.ids === 'safe' ? 'the safe categories' : command.ids.join(', ')} would remove` }
     }
     return { text: opened.text }
+  })
+
+  // One line above the prompt for the most severe condition; Hide lasts the session.
+  on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
+    if (e.props.hasSurvey) return next(e)
+    const band = bandFor(await read($, scanned), thresholdGB, await read($, hidden))
+    if (!band) return next(e)
+    const { Box, Text, Button } = $.ui.resolve(e)
+    return (
+      <Box gap={2}>
+        <Text color="warning" wrap="truncate-end">{band.text}</Text>
+        {band.canOpen && <Button key="sweep-open" label="Open" hotkey="o" onPress={() => void openPane($)} />}
+        <Button key="sweep-hide" label="Hide" hotkey="h" onPress={() => void update($, hidden, (list) => [...list, band.code])} />
+      </Box>
+    )
   })
 
   on('ui.render', { component: 'Pane', requestId: PANE }, async ($, e) => {

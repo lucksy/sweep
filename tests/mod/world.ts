@@ -80,6 +80,8 @@ export function world(on: On, engine: Engine = {}, env: Record<string, string> =
     seen.stored.push(String((e as { key?: string }).key))
     return { value: undefined } as never
   })
+  // Stands for the engine's own band: what a hook's next(e) draws.
+  on('ui.render', { component: 'AbovePrompt' }, ($x, e) => $x.ui.resolve(e).Text({ children: '' }))
   on('session.start', (_$, e) => ({ cwd: e.cwd }) as never)
   mock.env(on, env)
   const clock = mock.clock(on, { now: Date.parse('2026-10-13T12:00:00Z') })
