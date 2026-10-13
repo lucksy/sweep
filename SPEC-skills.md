@@ -38,3 +38,7 @@ Frontmatter carried over from clearx:
 - [ ] `claude plugin validate --strict .` passes, and `claude -p --plugin-dir . "list sweep skills"` lists all three.
 - [ ] In a sandboxed session (`HOME` etc. pointed at the fixture), `/sweep:clean safe` shows the dry run and asks before deleting; declining deletes nothing (verified by a second scan).
 - [ ] No skill text tells Claude to use `rm`, `git worktree remove` or any delete command directly.
+
+## Additions (2026-10-13)
+
+- `/sweep:clean` asks with three options: **Delete**, **Move to Trash** (runs `--trash`; the space returns when the Trash is emptied), and **Cancel**.

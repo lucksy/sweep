@@ -14,9 +14,9 @@ The `sweep` shell command: a readable text report for people, and the JSON contr
 ## Commands
 
 ```
-sweep [scan] [--details] [--json] [--progress] [--days N] [--force]
+sweep [scan] [--details] [--json] [--progress] [--days N] [--force] [--roots a,b]
 sweep explain <id> [--json]
-sweep clean <id...|safe|all> [--only <itemId,...>] [--yes] [--force] [--days N] [--json] [--progress]
+sweep clean <id...|safe|all> [--only <itemId,...>] [--yes] [--trash] [--force] [--days N] [--json] [--progress] [--roots a,b]
 sweep help | --help | -h
 sweep --version
 ```
@@ -24,6 +24,7 @@ sweep --version
 - `scan` is the default command. `list`, `ls`, `-list` and `--list` are aliases, kept from clearx.
 - `clean` without `--yes` is a dry run. It prints what would go, says "Would free X" and exits 0.
 - `safe` means every category with risk `safe`; `all` means every category.
+- `--trash` moves to the Trash instead of deleting (SPEC-engine §Additions); `--roots` sets where forgotten worktrees are searched.
 - Nothing is stored: each command scans afresh (SPEC.md, "sweep stores no data").
 
 ## Text output

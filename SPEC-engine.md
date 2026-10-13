@@ -177,3 +177,25 @@ Stdout keeps only the final JSON.
 - **Always:** keep the engine free of run-time dependencies.
 - **Ask first:** a schema-2 change, or a new category.
 - **Never:** print anything except the final JSON to stdout in `--json` mode.
+
+## Additions (2026-10-13, at the user's request)
+
+### Forgotten worktrees (feature #2)
+
+Claude worktrees in repos that `~/.claude.json` no longer lists are found by scanning **roots**:
+- **Roots, by default:** whichever of `~/Projects`, `~/projects`, `~/code`, `~/src`, `~/dev`, `~/work`, `~/Developer` and `~/repos` exist.
+- **Overrides:** `--roots a,b` or the `SWEEP_ROOTS` env (comma-separated, `~` allowed). An empty value turns the search off.
+- **The search:** `find <root> -maxdepth 5`, skipping `node_modules` and `.git`, looking for `*/.claude/worktrees`. The repo above each one joins the project paths for this scan.
+- **Marking:** its worktree items carry `detail.discovered: true` and a note starting `not in Claude's project list`.
+- **Speed:** the search runs alongside the other passes and must keep a full scan within the 15 s target.
+
+### Move to Trash (feature #8)
+
+- **Flag:** `clean --trash` moves each item to the user's Trash instead of deleting it:
+  - macOS: `/usr/bin/trash` (macOS 15+); otherwise a move into `~/.Trash` with a unique name
+  - Linux: `gio trash`
+- **Worktrees:** the folder is trashed, then `git worktree prune` drops the record, and the `worktree-*` branch is deleted as before (only with 0 unique commits).
+- **Branches** cannot go to the Trash and are deleted as before.
+- **Guard:** every path passes `guard.check` first, exactly as for a delete.
+- **Result:** the clean result carries `"mode": "trash"` (or `"delete"`). `freedBytes` counts what was moved; the space comes back when the Trash is emptied.
+- **Errors:** an item the Trash refuses goes to `failed`, and is never deleted instead.

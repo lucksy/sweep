@@ -577,3 +577,78 @@ Remove the old `skills/list` and `skills/clearx`.
 ## Checkpoint: Complete
 - [ ] All SPEC.md success criteria met with evidence
 - [ ] Human review and approval
+
+## Task 24: Forgotten worktrees: search scan roots (#2)
+**Status:** todo
+
+**Description:** SPEC-engine §Additions: find `.claude/worktrees` under the scan roots (defaults, `--roots`, `SWEEP_ROOTS`), add those repos for this scan, and mark their items. The pane passes the `scanRoots` setting.
+
+**Acceptance criteria:**
+- [ ] A sandbox repo with a Claude worktree that `~/.claude.json` does not list is found under a root, with the note `not in Claude's project list`; with `--roots ''` it is not
+- [ ] `node_modules` and `.git` are not descended into
+- [ ] A full real scan stays ≤ 15 s
+
+**Verification:**
+- [ ] `node --test "tests/**/*.test.mjs"`, `claude plugin test .`, and a timed real scan
+
+**Dependencies:** T7
+
+**Files likely touched:** `engine/context.mjs`, `engine/git.mjs`, `engine/sweep.mjs`, `tests/engine/roots.test.mjs`, `hooks/register.tsx`
+
+**Estimated scope:** S
+
+## Task 25: Move to Trash instead of deleting (#8)
+**Status:** todo
+
+**Description:** SPEC-engine and SPEC-pane §Additions: `clean --trash` in the engine (macOS `trash`, Linux `gio trash`, guard first, worktree record pruned); `mode` in the clean result; Move to Trash (`t`) on the pane's confirm step; the skill asks Delete / Trash / Cancel.
+
+**Acceptance criteria:**
+- [ ] In the sandbox, `clean all --trash --yes` leaves the same survivors as a delete, and every removed path is gone from its place
+- [ ] An item the Trash refuses lands in `failed` and stays in place
+- [ ] Pane: the `t` button runs `--trash`, and the done line says the space returns when the Trash is emptied
+
+**Verification:**
+- [ ] `node --test "tests/**/*.test.mjs"`, `claude plugin test .`
+
+**Dependencies:** T7, T16
+
+**Files likely touched:** `engine/trash.mjs`, `engine/clean.mjs`, `engine/categories/worktrees.mjs`, `engine/sweep.mjs`, `hooks/pane/clean.tsx`, `hooks/register.tsx`, `skills/clean/SKILL.md`
+
+**Estimated scope:** M
+
+## Task 26: Item actions: reveal and copy path (#12)
+**Status:** todo
+
+**Description:** reveal and copy buttons on every item row in the category and project views.
+
+**Acceptance criteria:**
+- [ ] reveal runs `open -R <path>` (macOS) or `xdg-open <dir>` (Linux); a branch item reveals its repo
+- [ ] copy calls `$.ui.copy` with the path and toasts
+
+**Verification:**
+- [ ] `claude plugin test .`
+
+**Dependencies:** T17, T18
+
+**Files likely touched:** `hooks/pane/item-actions.tsx`, `hooks/pane/category.tsx`, `hooks/pane/project.tsx`, `hooks/register.tsx`, `tests/mod/actions.test.ts`
+
+**Estimated scope:** S
+
+## Task 27: Ask Claude about a worktree (#10)
+**Status:** todo
+
+**Description:** an ask button on worktree items, and on branch items with unique commits, that submits a read-only review prompt to Claude.
+
+**Acceptance criteria:**
+- [ ] The prompt names the path or branch, asks for status, log and diff stat, and says not to delete anything
+- [ ] It is submitted with `$.prompt.submit`, and a toast confirms it
+- [ ] There is no ask button on non-worktree items
+
+**Verification:**
+- [ ] `claude plugin test .`
+
+**Dependencies:** T26
+
+**Files likely touched:** `hooks/pane/item-actions.tsx`, `hooks/register.tsx`, `tests/mod/actions.test.ts`
+
+**Estimated scope:** S

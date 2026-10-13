@@ -184,3 +184,16 @@ Every action is a `Button` with a `hotkey`, so it works by mouse (fullscreen ter
 - [ ] After a clean, the pane rescans, and the footer shows `freed this session`.
 - [ ] The pane never calls `$.store` or `$.fs.write` (a test spies on both).
 - [ ] Manual checklist: Ghostty (pixels), Terminal.app (cells), 110 / 144 / 200 columns, mouse and keyboard.
+
+## Additions (2026-10-13, at the user's request)
+
+- **Delete or Trash (feature #8).** The confirm step has two buttons:
+  - **Delete X** (`y`)
+  - **Move X to Trash** (`t`), which runs `clean --trash`. The done line then reads `Moved X to the Trash · empty it to free the space`.
+
+  Cancel (`n`) is unchanged.
+- **Item actions (features #10, #12).** Every item row in the category and project views gets plain buttons:
+  - **reveal**: `open -R <path>` on macOS, `xdg-open <folder>` on Linux; a branch item reveals its repo
+  - **copy**: `$.ui.copy` of the path, then a toast `Copied <path>`
+  - **ask** (worktree items, and branch items that hold commits on no other branch): submits a prompt to Claude with `$.prompt.submit`. Claude is asked to inspect the worktree or branch read-only (`git status`, the log against the main branch, a `git diff --stat`), say what the agent did and whether the work is still needed or already merged, and never delete anything. The toast says `Asked Claude about <name>`.
+- **Setting `scanRoots`** (string, default empty = the engine's default roots): the folders searched for forgotten worktrees. The pane passes it as `--roots`; `off` turns the search off.

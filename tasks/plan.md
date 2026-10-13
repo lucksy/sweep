@@ -92,6 +92,12 @@ Details, acceptance criteria and verification for each task are in `tasks/todo.m
 ### Phase 5: Finish
 - [ ] T23: README, clearx retirement, full verification
 
+### Phase 6: Additions (2026-10-13, chosen by the user)
+- [ ] T24: Forgotten worktrees: search scan roots (#2)
+- [ ] T25: Move to Trash instead of deleting (#8)
+- [ ] T26: Item actions: reveal and copy path (#12)
+- [ ] T27: Ask Claude about a worktree (#10)
+
 ### Checkpoint: Complete
 - [ ] Every SPEC.md success criterion met with evidence; human review
 
