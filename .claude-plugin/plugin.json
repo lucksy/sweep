@@ -5,6 +5,8 @@
   "author": {
     "name": "lucksy"
   },
+  "homepage": "https://github.com/lucksy/sweep",
+  "repository": "https://github.com/lucksy/sweep",
   "license": "MIT",
   "keywords": [
     "cleanup",
@@ -36,7 +38,7 @@
     "statusLine": {
       "type": "boolean",
       "title": "Status line entry",
-      "description": "Show \"sweep 3.5G\" (reclaimable) in the status line after a scan; \u26a0 when a warning is active.",
+      "description": "Show \"sweep 3.5G\" (reclaimable) in the status line after a scan; ⚠ when a warning is active.",
       "default": true
     },
     "bandThresholdGB": {

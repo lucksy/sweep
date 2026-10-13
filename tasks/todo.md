@@ -295,7 +295,7 @@ Removed 2026-10-13: sweep stores no data (SPEC-history.md). Kept as a number onl
 **Notes:** No trend chart (removed with history). The pixel treemap carries no words in the picture, so its legend names every tile with its size in the tile's color (the cell twin's legend is passed in by the caller); alt and hit boxes are the twin's. charts/png.ts is copied from agent-skills-mods (MIT, the author's own).
 
 ## Task 13: Skills: `/sweep:scan`, `/sweep:clean`, `/sweep:explain`
-**Status:** in progress · started 2026-10-13 · step commit
+**Status:** done · started 2026-10-13 · done 2026-10-13
 
 **Description:** Rewrite the three SKILL.md files per SPEC-skills:
 - the new engine path
