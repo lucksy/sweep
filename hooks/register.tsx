@@ -11,6 +11,7 @@ import { resolveStyle, type ChartStyle, type TerminalEnv } from '../charts/termi
 import { ago, onlyIds, projectSelection, safeIds, selectedIds, toggle, toggleItem } from './pane/model'
 import { Projects, Tabs } from './pane/projects'
 import { parseSweep } from './pane/command'
+import { BACKGROUND_DELAY_MS, statusText } from './alerts/status'
 import { Category } from './pane/category'
 import { CleanBar } from './pane/clean'
 import { Overview } from './pane/overview'
@@ -41,6 +42,10 @@ const cleanError = atom({ plugin: 'sweep', key: 'cleanError' } as const, null as
 let inflight: Promise<void> | null = null
 // What the terminal is, read once per session start: whether it draws pictures.
 let terminal: TerminalEnv = {}
+// Whether the status line entry is on (userConfig statusLine), set in register().
+let statusLineOn = true
+// The session's one background scan, so a second session.start does not schedule another.
+let backgroundScheduled = false
 
 function rescan($: EngineInterface): Promise<void> {
   inflight ??= runScan($).finally(() => { inflight = null })
@@ -82,6 +87,7 @@ async function runScan($: EngineInterface) {
     await update($, scanned, () => result)
     await update($, scannedAt, () => now)
     await update($, status, () => 'idle')
+    $.ui.status(statusText(result, statusLineOn))
   } catch (error) {
     await update($, failure, () => (error instanceof Error ? error.message : String(error)))
     await update($, status, () => 'error')
@@ -158,6 +164,8 @@ async function openPane($: EngineInterface, { force = false } = {}): Promise<{ t
 
 export const register: Register = (on, options) => {
   const chartStyle = (options.chartStyle ?? 'auto') as ChartStyle
+  statusLineOn = options.statusLine !== false
+  const backgroundScan = options.backgroundScan !== false
 
   on('session.start', async ($, e, next) => {
     terminal = {
@@ -165,6 +173,11 @@ export const register: Register = (on, options) => {
       termProgram: await $.env.get('TERM_PROGRAM'),
       kitty: await $.env.get('KITTY_WINDOW_ID'),
       tmux: await $.env.get('TMUX'),
+    }
+    // One read-only scan a minute in, so the status line and band have numbers.
+    if (backgroundScan && !backgroundScheduled) {
+      backgroundScheduled = true
+      $.clock.after(BACKGROUND_DELAY_MS, () => void rescan($))
     }
     await $.command.register({
       name: 'sweep',

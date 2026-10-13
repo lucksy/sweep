@@ -475,7 +475,7 @@ Remove the old `skills/list` and `skills/clearx`.
 - [ ] Human review
 
 ## Task 20: Status line entry and background scan, once per session
-**Status:** todo
+**Status:** done · started 2026-10-13 · done 2026-10-13
 
 **Description:**
 - The background scan on `session.start`: once per session, a 60 s delay, read-only argv, a 5 min timeout, joining a running pane scan, the result in `$.state` shared with the pane.
@@ -483,18 +483,20 @@ Remove the old `skills/list` and `skills/clearx`.
 - The `backgroundScan` and `statusLine` settings.
 
 **Acceptance criteria:**
-- [ ] On: exactly one spawn per session, 60 s after start. Off: none
-- [ ] Every spawn's argv contains `scan` and never `clean` (test asserts it)
-- [ ] Status text cases: none yet, normal, warning `⚠`, < 100 MB hidden, setting off hidden; no `$.store` use
+- [x] On: exactly one spawn per session, 60 s after start. Off: none
+- [x] Every spawn's argv contains `scan` and never `clean` (test asserts it)
+- [x] Status text cases: none yet, normal, warning `⚠`, < 100 MB hidden, setting off hidden; no `$.store` use
 
 **Verification:**
-- [ ] `claude plugin test .`
+- [x] `claude plugin test .`
 
 **Dependencies:** T2, T4
 
 **Files likely touched:** `hooks/alerts/background.ts`, `hooks/alerts/status.ts`, `hooks/register.tsx`, `hooks/alerts.test.ts`
 
 **Estimated scope:** M
+
+**Notes:** The background scan runs through the same rescan() the pane uses, so a pane scan in flight is joined, and its result is the pane's. A hot reload of the mod is a fresh module and schedules one more background scan; nothing is persisted to prevent that (sweep stores nothing).
 
 ## Task 21: Band above the prompt: conditions, hide, return
 **Status:** todo
