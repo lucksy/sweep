@@ -251,23 +251,25 @@ Removed 2026-10-13: sweep stores no data (SPEC-history.md). Kept as a number onl
 **Notes:** No sparkline (removed with history). Palette changed from SPEC-charts' suggestion: amber #fab219 fails 3:1 on white, so caution is #c47f00 and every chart color is chosen to pass on both backgrounds (tested). Text a chart draws is sanitized to one-column characters so a project name can never get a Raster refused.
 
 ## Task 11: Charts: footprint stacked bar and treemap with hit boxes
-**Status:** todo
+**Status:** done · started 2026-10-13 · done 2026-10-13
 
 **Description:** `charts/stacked.ts` (SPEC-charts §1, eighth-block precision, reclaimable underline row) and `charts/treemap.ts` (§2, squarified, labels, `+N more`, `hit` boxes).
 
 **Acceptance criteria:**
-- [ ] Stacked segments sum to the width ± 1 eighth-cell, and parts ≥ 1% are always visible
-- [ ] Treemap tile areas are proportional within 1 cell, and every id has a tile or is in `+N more`
-- [ ] Snapshot tests of decoded cells for fixed inputs
+- [x] Stacked segments sum to the width ± 1 eighth-cell, and parts ≥ 1% are always visible
+- [x] Treemap tile areas are proportional within 1 cell, and every id has a tile or is in `+N more`
+- [x] Snapshot tests of decoded cells for fixed inputs
 
 **Verification:**
-- [ ] `claude plugin test .`
+- [x] `claude plugin test .`
 
 **Dependencies:** T10
 
 **Files likely touched:** `charts/stacked.ts`, `charts/treemap.ts`, `tests/charts/stacked.test.ts`, `tests/charts/treemap.test.ts`
 
 **Estimated scope:** M
+
+**Notes:** Treemap tiles are colored backgrounds (neighbours of one color alternate a shade darker) rather than box-drawing borders; text on a tile is black or white, whichever contrasts more. The legend is passed in by the caller (it knows what the colors mean).
 
 ## Task 12: Charts: age histogram, PNG pixels
 **Status:** todo
