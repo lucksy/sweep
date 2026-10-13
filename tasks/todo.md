@@ -621,22 +621,24 @@ Remove the old `skills/list` and `skills/clearx`.
 **Notes:** Checked for real: /usr/bin/trash moved a scratch probe file (sweep-trash-probe.txt, now in your Trash). macOS hides ~/.Trash from the terminal (Operation not permitted), so the ~/.Trash fallback for macOS before 15 may be refused; such items land in failed and stay in place. Tests use SWEEP_TRASH_DIR so nothing reaches your real Trash. Bug found on the way: git keeps a trashed worktree's branch checked out until 'git worktree prune', so prune runs before the branch is deleted.
 
 ## Task 26: Item actions: reveal and copy path (#12)
-**Status:** todo
+**Status:** done · started 2026-10-13 · done 2026-10-13
 
 **Description:** reveal and copy buttons on every item row in the category and project views.
 
 **Acceptance criteria:**
-- [ ] reveal runs `open -R <path>` (macOS) or `xdg-open <dir>` (Linux); a branch item reveals its repo
-- [ ] copy calls `$.ui.copy` with the path and toasts
+- [x] reveal runs `open -R <path>` (macOS) or `xdg-open <dir>` (Linux); a branch item reveals its repo
+- [x] copy calls `$.ui.copy` with the path and toasts
 
 **Verification:**
-- [ ] `claude plugin test .`
+- [x] `claude plugin test .`
 
 **Dependencies:** T17, T18
 
 **Files likely touched:** `hooks/pane/item-actions.tsx`, `hooks/pane/category.tsx`, `hooks/pane/project.tsx`, `hooks/register.tsx`, `tests/mod/actions.test.ts`
 
 **Estimated scope:** S
+
+**Notes:** reveal and copy are plain, dim buttons on every item row (kept items too), in the category and project views.
 
 ## Task 27: Ask Claude about a worktree (#10)
 **Status:** todo

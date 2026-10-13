@@ -28,6 +28,7 @@ export function world(on: On, engine: Engine = {}, env: Record<string, string> =
     opened: [] as string[],
     status: [] as (string | undefined)[],
     toasts: [] as string[],
+    copied: [] as string[],
     runs: [] as string[][],
     spawns: [] as string[][],
     writes: [] as string[],
@@ -73,6 +74,10 @@ export function world(on: On, engine: Engine = {}, env: Record<string, string> =
   on('ui.toast', (_$, e) => {
     seen.toasts.push(e.text)
     return { value: undefined }
+  })
+  on('ui.copy', (_$, e) => {
+    seen.copied.push(e.text)
+    return { value: { isCopied: true } } as never
   })
   on('fs.write', (_$, e) => {
     seen.writes.push(e.path)

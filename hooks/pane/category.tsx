@@ -8,6 +8,7 @@ import type { ScanCategory } from '../../types'
 import { ChartView, type DrawStyle } from './charts'
 import { itemTicked, REASONS } from './model'
 import type { El } from './overview'
+import { ItemButtons, type ItemActions } from './item-actions'
 
 export type CategoryData = {
   category: ScanCategory
@@ -17,7 +18,7 @@ export type CategoryData = {
   style: DrawStyle
 }
 
-export type CategoryActions = {
+export type CategoryActions = ItemActions & {
   back: () => void
   toggleItem: (itemId: string) => void
   cleanBar: () => unknown
@@ -56,6 +57,7 @@ export function Category(E: El, d: CategoryData, a: CategoryActions) {
                 <Text wrap="truncate-middle">{item.project ? `${item.project.split('/').pop()}  ${item.label}` : item.label}</Text>
                 <Text dimColor wrap="truncate-end">{item.cleanable ? item.note : `kept: ${REASONS[item.reason ?? ''] ?? item.reason}`}</Text>
               </Box>
+              {ItemButtons(E, item, a)}
             </Box>
           ))}
         </Box>

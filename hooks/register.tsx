@@ -5,12 +5,13 @@
 import { atom, read, update } from 'claude-code'
 import type { Elements, EngineInterface, Register } from 'claude-code'
 
-import type { Flow, Progress, ScanResult, ScanStatus, View, CleanResult } from '../types'
+import type { CleanResult, Flow, Progress, ScanItem, ScanResult, ScanStatus, View } from '../types'
 import { cleanArgv, formatBytes, parseClean, parseScan, progressOf, scanArgv, takeLines, textArgv } from './engine-client'
 import { resolveStyle, type ChartStyle, type TerminalEnv } from '../charts/terminal'
 import { ago, onlyIds, projectSelection, safeIds, selectedIds, toggle, toggleItem } from './pane/model'
 import { Projects, Tabs } from './pane/projects'
 import { Project } from './pane/project'
+import { itemPath, revealArgv } from './pane/item-actions'
 import { parseSweep } from './pane/command'
 import { BACKGROUND_DELAY_MS, statusText } from './alerts/status'
 import { bandFor } from './alerts/band'
@@ -303,6 +304,13 @@ export const register: Register = (on, options) => {
       cancel: () => void Promise.all([update($, flow, () => 'idle'), update($, dry, () => null)]),
       back: () => void Promise.all([update($, flow, () => 'idle'), update($, cleanError, () => null)]),
       })
+    const itemActions = {
+      reveal: (item: ScanItem) => void $.process.run(revealArgv(item, result?.host.platform ?? 'darwin')),
+      copy: (item: ScanItem) => void (async () => {
+        await $.ui.copy({ text: itemPath(item) })
+        $.ui.toast(`Copied ${itemPath(item)}`)
+      })(),
+    }
     const currentView = await read($, view)
     const tab = (v: 'overview' | 'projects') => void update($, view, () => v)
     const tabs = () => Tabs(E, currentView === 'projects' || currentView === 'project' ? 'projects' : 'overview', { tab })
@@ -313,6 +321,7 @@ export const register: Register = (on, options) => {
         <Box flexDirection="column" gap={1}>
           {tabs()}
           {Project(E, { scan: result, path: projectPath, selected: data.selected, selectedItems: data.selectedItems, bodyColumns: data.bodyColumns, style: data.style }, {
+        ...itemActions,
         back: () => void update($, view, () => 'projects'),
         selectAll: () => void (async () => {
           const next = projectSelection(result, projectPath)
@@ -346,6 +355,7 @@ export const register: Register = (on, options) => {
     const focused = result?.categories.find((c) => c.id === focusedId)
     if (currentView === 'category' && result && focused) {
       return Category(E, { category: focused, selected: data.selected, selectedItems: data.selectedItems, bodyColumns: data.bodyColumns, style: data.style }, {
+        ...itemActions,
         back: () => void update($, view, () => 'overview'),
         toggleItem: (itemId) => void (async () => {
           const next = toggleItem(result, await read($, selected), await read($, selectedItems), focused.id, itemId)
