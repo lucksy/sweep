@@ -8,6 +8,8 @@
   },
   "homepage": "https://github.com/lucksy/sweep",
   "repository": "https://github.com/lucksy/sweep",
+  "documentationUrl": "https://github.com/lucksy/sweep/blob/main/README.md",
+  "supportUrl": "https://www.linkedin.com/in/lucksy/",
   "license": "MIT",
   "keywords": [
     "cleanup",
