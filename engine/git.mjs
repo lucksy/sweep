@@ -67,7 +67,8 @@ async function describe(ctx, repo, wt, repoSessions) {
     : owned && !ctx.force ? 'owned-by-live-session'
     : null;
 
-  const parts = [wt.branch ?? 'detached'];
+  const discovered = ctx.isForgotten([repo.main, ...repo.projectDirs]);
+  const parts = discovered ? ["not in Claude's project list", wt.branch ?? 'detached'] : [wt.branch ?? 'detached'];
   if (wt.locked) parts.push('locked: an agent may be running');
   if (inUse) parts.push('a live session is working here');
   else if (owned) parts.push('made during a session still running in this repo: kept unless --force');
@@ -81,7 +82,7 @@ async function describe(ctx, repo, wt, repoSessions) {
   return {
     path: wt.path, label: path.basename(wt.path), project: repo.main, bytes, ageDays: age,
     cleanable: reason === null, reason, note: parts.join(' · '),
-    detail: { branch: wt.branch, dirty, unique, nodeModulesBytes },
+    detail: { branch: wt.branch, dirty, unique, nodeModulesBytes, ...(discovered ? { discovered: true } : {}) },
     internal: { repo: repo.main, branch: wt.branch, unique, keptForWork: reason === 'dirty' || reason === 'unique-commits' || reason === 'owned-by-live-session' },
   };
 }

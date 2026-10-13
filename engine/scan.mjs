@@ -70,10 +70,12 @@ export async function scan(ctx, { ids = null, options = {}, lean = false, onProg
   const started = Date.now();
   // Every tree measured once, in parallel, while the categories run; worktree
   // folders are found from the project list so their pass starts at once.
+  const claudeTrees = ctx.prefetch([[ctx.claudeDir, 5], [ctx.tmpRoot, 2], [path.dirname(ctx.cliVersions), 2]]);
+  await ctx.discover();
   const worktreeRoots = [...new Set(ctx.projectPaths().map((d) => path.join(d, '.claude', 'worktrees')))].filter(isDir);
   // Each worktree gets its own pass, so big ones are measured side by side.
   const worktreeDirs = worktreeRoots.flatMap((r) => ls(r).map((n) => path.join(r, n))).filter(isDir);
-  const trees = ctx.prefetch([[ctx.claudeDir, 5], [ctx.tmpRoot, 2], [path.dirname(ctx.cliVersions), 2], ...worktreeDirs.map((d) => [d, 1])]);
+  const trees = Promise.all([claudeTrees, ctx.prefetch(worktreeDirs.map((d) => [d, 1]))]);
   const bigFiles = bigTmpFiles(ctx);
   const chosen = CATEGORIES.filter((c) => !ids || ids.includes(c.id));
   let finished = 0;

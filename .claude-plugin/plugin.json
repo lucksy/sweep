@@ -44,6 +44,12 @@
       "title": "Band threshold (GB)",
       "description": "Show a line above the prompt when this much space or more is reclaimable. Runaway task output, low disk and paused cleanup show regardless.",
       "default": 5
+    },
+    "scanRoots": {
+      "type": "string",
+      "title": "Folders to search for forgotten worktrees",
+      "description": "Comma-separated folders searched for Claude worktrees in repos Claude no longer lists. Empty: ~/Projects, ~/code, ~/src, ~/dev, ~/work, ~/Developer, ~/repos (those that exist). \"off\" turns it off.",
+      "default": ""
     }
   }
 }

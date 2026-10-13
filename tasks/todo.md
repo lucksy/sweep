@@ -579,23 +579,25 @@ Remove the old `skills/list` and `skills/clearx`.
 - [ ] Human review and approval
 
 ## Task 24: Forgotten worktrees: search scan roots (#2)
-**Status:** todo
+**Status:** done · started 2026-10-13 · done 2026-10-13
 
 **Description:** SPEC-engine §Additions: find `.claude/worktrees` under the scan roots (defaults, `--roots`, `SWEEP_ROOTS`), add those repos for this scan, and mark their items. The pane passes the `scanRoots` setting.
 
 **Acceptance criteria:**
-- [ ] A sandbox repo with a Claude worktree that `~/.claude.json` does not list is found under a root, with the note `not in Claude's project list`; with `--roots ''` it is not
-- [ ] `node_modules` and `.git` are not descended into
-- [ ] A full real scan stays ≤ 15 s
+- [x] A sandbox repo with a Claude worktree that `~/.claude.json` does not list is found under a root, with the note `not in Claude's project list`; with `--roots ''` it is not
+- [x] `node_modules` and `.git` are not descended into
+- [x] A full real scan stays ≤ 15 s
 
 **Verification:**
-- [ ] `node --test "tests/**/*.test.mjs"`, `claude plugin test .`, and a timed real scan
+- [x] `node --test "tests/**/*.test.mjs"`, `claude plugin test .`, and a timed real scan
 
 **Dependencies:** T7
 
 **Files likely touched:** `engine/context.mjs`, `engine/git.mjs`, `engine/sweep.mjs`, `tests/engine/roots.test.mjs`, `hooks/register.tsx`
 
 **Estimated scope:** S
+
+**Notes:** Real machine: full scan 7.9–8.2 s with the search; 0 forgotten worktrees (every repo with Claude worktrees is known). Bug found and fixed on the way: on macOS's case-insensitive disk ~/Projects and ~/projects are one folder, so roots are resolved to their real spelling and deduplicated, and a repo is 'forgotten' only when none of its folders is known to Claude.
 
 ## Task 25: Move to Trash instead of deleting (#8)
 **Status:** todo

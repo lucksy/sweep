@@ -49,6 +49,8 @@ let inflight: Promise<void> | null = null
 let terminal: TerminalEnv = {}
 // Whether the status line entry is on (userConfig statusLine), set in register().
 let statusLineOn = true
+// Folders searched for forgotten worktrees (userConfig scanRoots), set in register().
+let scanRoots = ''
 // The session's one background scan, so a second session.start does not schedule another.
 let backgroundScheduled = false
 // Runaway files already toasted this session.
@@ -85,7 +87,7 @@ async function runScan($: EngineInterface) {
   await update($, progress, () => null)
   await update($, failure, () => null)
   try {
-    const run = await runEngine($, scanArgv($.plugin.root), async (event) => {
+    const run = await runEngine($, scanArgv($.plugin.root, scanRoots), async (event) => {
       const p = progressOf(event)
       if (p) await update($, progress, () => p)
     })
@@ -174,6 +176,7 @@ async function openPane($: EngineInterface, { force = false } = {}): Promise<{ t
 export const register: Register = (on, options) => {
   const chartStyle = (options.chartStyle ?? 'auto') as ChartStyle
   statusLineOn = options.statusLine !== false
+  scanRoots = typeof options.scanRoots === 'string' ? options.scanRoots : ''
   const backgroundScan = options.backgroundScan !== false
   const thresholdGB = typeof options.bandThresholdGB === 'number' ? options.bandThresholdGB : 5
 

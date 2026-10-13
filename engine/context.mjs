@@ -1,11 +1,12 @@
 // Where Claude Code keeps things on this machine, and what is running now.
 // Computed lazily, once per scan.
 
+import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { execFile } from 'node:child_process';
 
-import { alive, encodeProject, limit, ls, readJson, sh, stat } from './fsx.mjs';
+import { alive, encodeProject, isDir, limit, ls, readJson, sh, shAsync, stat } from './fsx.mjs';
 import { createGuard } from './guard.mjs';
 
 // `du -k` of a folder, or one pass over a tree with `-d depth`: path → bytes.
@@ -25,7 +26,10 @@ function du(args) {
   });
 }
 
-export function createContext({ env = process.env, days = null, force = false } = {}) {
+// Where people keep code: searched for Claude worktrees ~/.claude.json no longer lists.
+const DEFAULT_ROOTS = ['Projects', 'projects', 'code', 'src', 'dev', 'work', 'Developer', 'repos'];
+
+export function createContext({ env = process.env, days = null, force = false, roots = null } = {}) {
   // SWEEP_* point the engine alone at another tree (a sandbox) without moving
   // Claude Code's own home, config or login.
   const home = env.SWEEP_HOME || env.HOME || os.homedir();
@@ -34,6 +38,14 @@ export function createContext({ env = process.env, days = null, force = false } 
   const tmpRoot = path.join(tmpBase, `claude-${process.getuid ? process.getuid() : 0}`);
   const cliVersions = path.join(home, '.local', 'share', 'claude', 'versions');
   const guard = createGuard({ home, claudeDir, tmpBase, tmpRoot, cliVersions });
+
+  // --roots, then SWEEP_ROOTS, then the defaults that exist; '' turns the search off.
+  const rootList = (roots ?? env.SWEEP_ROOTS ?? null) === null
+    ? DEFAULT_ROOTS.map((n) => path.join(home, n)).filter(isDir)
+    : String(roots ?? env.SWEEP_ROOTS).split(',').map((r) => r.trim()).filter(Boolean).map((r) => r.replace(/^~(?=$|\/)/, home));
+  // One spelling per folder: on a case-insensitive disk ~/Projects and ~/projects are the same.
+  const realRoots = [...new Set(rootList.flatMap((r) => { try { return [fs.realpathSync.native(r)]; } catch { return []; } }))];
+  let discovered = new Set();
 
   const memo = new Map();
   const once = (key, fn) => { if (!memo.has(key)) memo.set(key, fn()); return memo.get(key); };
@@ -84,10 +96,24 @@ export function createContext({ env = process.env, days = null, force = false } 
 
     claudeJson: () => once('claudeJson', () => readJson(path.join(home, '.claude.json')) ?? {}),
 
-    // Every directory Claude Code has been opened in.
+    roots: realRoots,
+    // Repos holding .claude/worktrees under the roots (node_modules and .git skipped). Run before projectPaths().
+    discover: () => once('discover', async () => {
+      const found = await Promise.all(realRoots.map((r) => shAsync('find', [r, '-maxdepth', '5', '(', '-name', 'node_modules', '-o', '-name', '.git', ')', '-prune', '-o', '-type', 'd', '-path', '*/.claude/worktrees', '-print', '-prune'])));
+      discovered = new Set(found.flatMap((out) => (out ? out.split('\n').filter(Boolean) : [])).map((p) => path.dirname(path.dirname(p))));
+      return discovered;
+    }),
+    // A repo none of whose folders Claude Code lists or runs in: found by the roots search alone.
+    isForgotten: (dirs) => {
+      const known = new Set([...Object.keys(ctx.claudeJson().projects ?? {}), ...ctx.live().cwds]);
+      return dirs.some((d) => discovered.has(d)) && !dirs.some((d) => known.has(d));
+    },
+
+    // Every directory Claude Code has been opened in, and repos found under the roots.
     projectPaths: () => once('projects', () => {
       const set = new Set(Object.keys(ctx.claudeJson().projects ?? {}));
       for (const cwd of ctx.live().cwds) set.add(cwd);
+      for (const repo of discovered) set.add(repo);
       return [...set];
     }),
 

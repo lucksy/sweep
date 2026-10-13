@@ -52,3 +52,11 @@ test('the status line stays off when the setting is off', { options: { statusLin
   expect(seen.status.every((s) => s === undefined)).toBe(true)
   expect(seen.stored).toEqual([])
 })
+
+test('the scanRoots setting reaches the engine as --roots', { options: { scanRoots: '~/work, ~/code' } }, async ($, on) => {
+  const seen = world(on, { scan: SCAN })
+  await $.session.start({ cwd: '/p', surface: 'terminal', isInteractive: true } as never)
+  await seen.clock.advance(61_000)
+  await seen.clock.settle()
+  expect(seen.spawns[0]?.slice(-2)).toEqual(['--roots', '~/work, ~/code'])
+})

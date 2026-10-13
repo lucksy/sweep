@@ -8,7 +8,9 @@ export const FIVE_MINUTES = 5 * 60_000
 const engine = (root: string) => `${root}/engine/sweep.mjs`
 
 /** The scan the pane and alerts run: JSON on stdout, NDJSON progress on stderr. */
-export const scanArgv = (root: string) => ['node', engine(root), 'scan', '--json', '--progress']
+export const scanArgv = (root: string, roots = '') => ['node', engine(root), 'scan', '--json', '--progress', ...rootsArgs(roots)]
+/** The scanRoots setting as engine flags: empty keeps the defaults, "off" turns the search off. */
+export const rootsArgs = (roots: string) => (roots.trim() === 'off' ? ['--roots', ''] : roots.trim() ? ['--roots', roots.trim()] : [])
 /** The same scan as plain text, for a terminal too narrow for the pane. */
 export const textArgv = (root: string, args: string[] = ['scan']) => ['node', engine(root), ...args]
 export const cleanArgv = (root: string, categories: string[], { yes = false, only = null as string[] | null } = {}) =>

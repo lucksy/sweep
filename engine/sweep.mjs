@@ -13,10 +13,11 @@ import { categoryIds, scan } from './scan.mjs';
 const argv = process.argv.slice(2);
 const flags = new Set(argv.filter((a) => a.startsWith('-')));
 const valueOf = (flag) => (argv.includes(flag) ? argv[argv.indexOf(flag) + 1] : null);
-const positional = argv.filter((a, i) => !a.startsWith('-') && !['--days', '--only'].includes(argv[i - 1]));
+const positional = argv.filter((a, i) => !a.startsWith('-') && !['--days', '--only', '--roots'].includes(argv[i - 1]));
 const DAYS = valueOf('--days') === null ? null : Number(valueOf('--days'));
 const ONLY = valueOf('--only')?.split(',').filter(Boolean) ?? null;
 const PROGRESS = flags.has('--progress');
+const ROOTS = valueOf('--roots');
 const FORCE = flags.has('--force');
 const YES = flags.has('--yes') || flags.has('-y');
 const JSON_OUT = flags.has('--json');
@@ -26,7 +27,7 @@ const width = process.stdout.columns || Number(process.env.COLUMNS) || 100;
 const view = { color, width, details: DETAILS };
 const red = (s) => (color ? `\x1b[31m${s}\x1b[0m` : s);
 
-const ctx = createContext({ days: DAYS, force: FORCE });
+const ctx = createContext({ days: DAYS, force: FORCE, roots: ROOTS });
 // NDJSON progress on stderr, so stdout stays the JSON result.
 const onProgress = PROGRESS ? (event) => process.stderr.write(`${JSON.stringify(event)}\n`) : () => {};
 const run = async (ids) => {
@@ -70,6 +71,7 @@ function help() {
                 [--only <itemId,...>] [--json] [--progress]
 
   --days N   override the age threshold of age-based categories
+  --roots a,b  folders searched for worktrees Claude no longer lists ('' turns it off)
   --force    also clean review-risk items and clean worktrees whose commits live only on their branch (branch kept)
 
   Categories: ${categoryIds().join(', ')}`);
