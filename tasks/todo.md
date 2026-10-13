@@ -164,7 +164,7 @@ Measure on this machine: baseline 28–43 s, target ≤ 15 s.
 **Notes:** Real-machine full scan (2026-10-13): 11.77 s, 10.97 s, 11.35 s (baseline 28–43 s for clearx; 56–93 s after T5). What did it: one du pass per tree (each worktree on its own) started before anything else; sizes wait only for the pass that covers them; git calls async, eight at a time, one rev-parse per project; categories in parallel; runaway-output search limited to 5 levels and run alongside. Fixture output is identical to T5.
 
 ## Task 7: Clean v2: `--only`, re-scan before delete, JSON result, progress, no files written
-**Status:** todo
+**Status:** done · started 2026-10-13 · done 2026-10-13
 
 **Description:**
 - `clean()` per SPEC-engine §Behavior 2–4: item selection with `--only`, re-scan before deleting, `skipped` with `no-longer-cleanable` / `unknown-id`, and the clean contract JSON. No lock file.
@@ -172,19 +172,21 @@ Measure on this machine: baseline 28–43 s, target ≤ 15 s.
 - The "stores nothing" test (§Behavior 7).
 
 **Acceptance criteria:**
-- [ ] `--only` deletes exactly the named items; an item made dirty after the scan lands in `skipped`
-- [ ] Two `clean --yes` started together on one fixture both finish, removing each item once
-- [ ] Scan and clean create no new files (sandbox listing before and after)
-- [ ] `--progress` writes only NDJSON to stderr, and stdout stays pure JSON
+- [x] `--only` deletes exactly the named items; an item made dirty after the scan lands in `skipped`
+- [x] Two `clean --yes` started together on one fixture both finish, removing each item once
+- [x] Scan and clean create no new files (sandbox listing before and after)
+- [x] `--progress` writes only NDJSON to stderr, and stdout stays pure JSON
 
 **Verification:**
-- [ ] `node --test "tests/engine/*.test.mjs"clean.test.mjs`
+- [x] `node --test "tests/engine/*.test.mjs"clean.test.mjs`
 
 **Dependencies:** T4
 
 **Files likely touched:** `engine/clean.mjs`, `engine/scan.mjs`, `tests/engine/clean.test.mjs`
 
 **Estimated scope:** M
+
+**Notes:** Two cleans at once: both finish; an item the other already removed is reported as skipped 'already-gone' (or failed for git), so 'removed exactly once' holds for the end state, which matches a single clean. Real-machine dry run of 'clean safe': would free 599M (153 items), nothing deleted.
 
 ## Checkpoint B: Engine
 - [ ] Sandbox suite proves every kept reason, the guard, `--only`, concurrent cleans, no files written and `--force` limits

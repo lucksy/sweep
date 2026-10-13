@@ -64,7 +64,9 @@ function info(ctx) {
 
 export const categoryIds = () => CATEGORIES.map((c) => c.id);
 
-export async function scan(ctx, { ids = null, options = {} } = {}) {
+// `lean` skips the footprint, rollups and warnings (a clean needs only the categories).
+// `onProgress` hears {event: 'category', id, index, total} as each category finishes.
+export async function scan(ctx, { ids = null, options = {}, lean = false, onProgress = () => {} } = {}) {
   const started = Date.now();
   // Every tree measured once, in parallel, while the categories run; worktree
   // folders are found from the project list so their pass starts at once.
@@ -73,8 +75,14 @@ export async function scan(ctx, { ids = null, options = {} } = {}) {
   const worktreeDirs = worktreeRoots.flatMap((r) => ls(r).map((n) => path.join(r, n))).filter(isDir);
   const trees = ctx.prefetch([[ctx.claudeDir, 5], [ctx.tmpRoot, 2], [path.dirname(ctx.cliVersions), 2], ...worktreeDirs.map((d) => [d, 1])]);
   const bigFiles = bigTmpFiles(ctx);
-  const categories = await Promise.all(CATEGORIES.filter((c) => !ids || ids.includes(c.id)).map((cat) => scanCategory(ctx, cat)));
+  const chosen = CATEGORIES.filter((c) => !ids || ids.includes(c.id));
+  let finished = 0;
+  const categories = await Promise.all(chosen.map((cat) => scanCategory(ctx, cat).then((r) => {
+    onProgress({ event: 'category', id: cat.id, index: ++finished, total: chosen.length });
+    return r;
+  })));
   await trees;
+  if (lean) return { schema: SCHEMA, categories };
   const sum = (list, pick) => list.reduce((t, x) => t + pick(x), 0);
   const diskNow = disk(ctx.home);
   return {

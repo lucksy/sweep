@@ -4,15 +4,18 @@
 
 import { createContext } from './context.mjs';
 import { fmt } from './fsx.mjs';
+import { clean as cleanItems } from './clean.mjs';
 import { categoryIds, scan } from './scan.mjs';
 
 // ---------- arguments
 
 const argv = process.argv.slice(2);
 const flags = new Set(argv.filter((a) => a.startsWith('-')));
-const positional = argv.filter((a, i) => !a.startsWith('-') && argv[i - 1] !== '--days');
-const daysIdx = argv.indexOf('--days');
-const DAYS = daysIdx >= 0 ? Number(argv[daysIdx + 1]) : null;
+const valueOf = (flag) => (argv.includes(flag) ? argv[argv.indexOf(flag) + 1] : null);
+const positional = argv.filter((a, i) => !a.startsWith('-') && !['--days', '--only'].includes(argv[i - 1]));
+const DAYS = valueOf('--days') === null ? null : Number(valueOf('--days'));
+const ONLY = valueOf('--only')?.split(',').filter(Boolean) ?? null;
+const PROGRESS = flags.has('--progress');
 const FORCE = flags.has('--force');
 const YES = flags.has('--yes') || flags.has('-y');
 const JSON_OUT = flags.has('--json');
@@ -22,7 +25,13 @@ const c = (code, s) => (color ? `\x1b[${code}m${s}\x1b[0m` : s);
 const dim = (s) => c(2, s), bold = (s) => c(1, s), red = (s) => c(31, s), green = (s) => c(32, s), yellow = (s) => c(33, s);
 
 const ctx = createContext({ days: DAYS, force: FORCE });
-const run = (ids) => scan(ctx, { ids, options: { days: DAYS } });
+// NDJSON progress on stderr, so stdout stays the JSON result.
+const onProgress = PROGRESS ? (event) => process.stderr.write(`${JSON.stringify(event)}\n`) : () => {};
+const run = async (ids) => {
+  const result = await scan(ctx, { ids, options: { days: DAYS }, onProgress });
+  onProgress({ event: 'done' });
+  return result;
+};
 
 // ---------- commands
 
@@ -62,28 +71,29 @@ async function explain(id) {
 
 async function clean(ids) {
   if (!ids.length) return fail(`name what to clean: sweep clean <id...> | safe | all. Categories: ${categoryIds().join(', ')}`);
-  const result0 = await run();
-  const all = result0.categories;
-  const wanted = ids.includes('all') ? all.map((x) => x.id) : ids.includes('safe') ? all.filter((x) => x.risk === 'safe').map((x) => x.id) : ids;
-  const unknown = wanted.filter((id) => !categoryIds().includes(id));
-  if (unknown.length) return fail(`unknown category: ${unknown.join(', ')}`);
-  const results = all.filter((r) => wanted.includes(r.id));
-  let freed = 0, failed = 0;
+  const unknown = ids.filter((id) => !['all', 'safe', ...categoryIds()].includes(id));
+  if (unknown.length) return fail(`unknown category: ${unknown.join(', ')}. Categories: ${categoryIds().join(', ')}`);
+  const { CATEGORIES } = await import('./categories/index.mjs');
+  const wanted = ids.includes('all') ? categoryIds() : [...new Set(ids.flatMap((id) => (id === 'safe' ? CATEGORIES.filter((x) => x.risk === 'safe').map((x) => x.id) : [id])))];
+  const result = await cleanItems(ctx, { categories: wanted, only: ONLY, dryRun: !YES, onProgress });
+  if (result.failed.length) process.exitCode = 1;
+  if (JSON_OUT) return console.log(JSON.stringify(result, null, 2));
+
   console.log(bold(`\nsweep clean ${YES ? '' : dim('(dry run: nothing is deleted; add --yes to delete)')}\n`));
-  for (const r of results) {
-    const todo = r.items.filter((i) => i.cleanable);
-    if (!todo.length) { console.log(dim(`  ${r.id}: nothing to clean`)); continue; }
-    console.log(`  ${bold(r.id)}: ${todo.length} item(s), ${fmt(r.reclaimableBytes)}`);
-    for (const i of todo) {
-      if (!YES) { console.log(dim(`    would remove ${fmt(i.bytes).padStart(6)}  ${i.path}`)); continue; }
-      try { r.clean(i, ctx); freed += i.bytes; console.log(green(`    removed ${fmt(i.bytes).padStart(6)}  ${i.path}`)); }
-      catch (e) { failed++; console.log(red(`    failed          ${i.path}: ${e.message}`)); }
-    }
-    if (r.found > todo.length) console.log(dim(`    kept ${r.found - todo.length} item(s) that hold work or are in use (see: sweep explain ${r.id})`));
+  for (const id of wanted) {
+    const removed = result.removed.filter((r) => r.category === id);
+    const failed = result.failed.filter((r) => r.category === id);
+    const kept = result.kept.filter((r) => r.category === id);
+    if (!removed.length && !failed.length) { console.log(dim(`  ${id}: nothing to clean`)); continue; }
+    console.log(`  ${bold(id)}: ${removed.length} item(s), ${fmt(removed.reduce((t, r) => t + r.bytes, 0))}`);
+    for (const r of removed) console.log((YES ? green : dim)(`    ${YES ? 'removed' : 'would remove'} ${fmt(r.bytes).padStart(6)}  ${r.path}`));
+    for (const r of failed) console.log(red(`    failed          ${r.path}: ${r.error}`));
+    if (kept.length) console.log(dim(`    kept ${kept.length} item(s) that hold work or are in use (see: sweep explain ${id})`));
   }
-  const total = results.reduce((t, r) => t + r.reclaimableBytes, 0);
-  console.log(YES ? `\n  ${bold('Freed')} ${fmt(freed)}${failed ? red(`, ${failed} failed`) : ''}\n` : `\n  ${bold('Would free')} ${fmt(total)}. Run again with --yes to delete.\n`);
-  if (failed) process.exitCode = 1;
+  for (const s of result.skipped) console.log(dim(`  skipped ${s.id}: ${s.reason}`));
+  console.log(YES
+    ? `\n  ${bold('Freed')} ${fmt(result.freedBytes)}${result.failed.length ? red(`, ${result.failed.length} failed`) : ''}\n`
+    : `\n  ${bold('Would free')} ${fmt(result.freedBytes)}. Run again with --yes to delete.\n`);
 }
 
 function fail(msg) { console.error(red(`sweep: ${msg}`)); process.exitCode = 2; }
@@ -94,6 +104,7 @@ function help() {
   sweep scan [--details] [--json]   scan and describe every category (default)
   sweep explain <id> [--json]       where it comes from, what Claude cleans itself, every item found
   sweep clean <id...|safe|all>      dry run; add --yes to delete
+                [--only <itemId,...>] [--json] [--progress]
 
   --days N   override the age threshold of age-based categories
   --force    also clean review-risk items and clean worktrees whose commits live only on their branch (branch kept)
