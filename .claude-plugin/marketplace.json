@@ -1,8 +1,14 @@
 {
   "name": "sweep",
   "description": "sweep: see and clean storage Claude Code leaves behind.",
-  "owner": { "name": "lucksy" },
+  "owner": {
+    "name": "Amila Sampath"
+  },
   "plugins": [
-    { "name": "sweep", "source": "./", "description": "See and clean storage Claude Code leaves behind." }
+    {
+      "name": "sweep",
+      "source": "./",
+      "description": "See and clean storage Claude Code leaves behind."
+    }
   ]
 }

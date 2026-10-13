@@ -4,7 +4,7 @@
   "version": "0.2.0",
   "description": "See and clean the storage Claude Code leaves behind: agent and workflow worktrees with their node_modules, temp scratchpads, superseded plugin versions, old transcripts, checkpoints, old CLI binaries and stray config copies. Every view is a fresh scan; sweep stores nothing. Dry run by default; never touches unsaved work.",
   "author": {
-    "name": "lucksy"
+    "name": "Amila Sampath"
   },
   "homepage": "https://github.com/lucksy/sweep",
   "repository": "https://github.com/lucksy/sweep",
