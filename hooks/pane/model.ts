@@ -76,3 +76,14 @@ export function toggleItem(scan: ScanResult, selected: string[], selectedItems: 
   if (next.length < all.length) items[categoryId] = all.filter((id) => next.includes(id))
   return { selected: selected.includes(categoryId) ? selected : [...selected, categoryId], selectedItems: items }
 }
+
+/** A project's cleanable items, as a selection: its categories and their item ids. */
+export function projectSelection(scan: ScanResult, project: string) {
+  const selectedItems: Record<string, string[]> = {}
+  for (const c of scan.categories) {
+    if (c.risk === 'review') continue
+    const ids = c.items.filter((i) => i.cleanable && i.project === project).map((i) => i.id)
+    if (ids.length) selectedItems[c.id] = ids
+  }
+  return { selected: Object.keys(selectedItems), selectedItems }
+}

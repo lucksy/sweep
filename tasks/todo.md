@@ -428,23 +428,25 @@ Remove the old `skills/list` and `skills/clearx`.
 **Notes:** Ticking items: an unticked category starts with every item [ ]; a tick picks that item only; ticking all of a category's cleanable items turns it back into a whole-category selection. A whole-category tick in the overview now also drops any item list left from the drill-down.
 
 ## Task 18: Projects view
-**Status:** todo
+**Status:** done · started 2026-10-13 · done 2026-10-13
 
 **Description:** The Projects tab: a bar list of the top 15 projects by reclaimable bytes, with `(gone)` marks. Pressing a row filters Overview to that project's items. Tabs `1`–`2` switch views.
 
 **Acceptance criteria:**
-- [ ] The project filter turns into `--only` with that project's items
-- [ ] Renders 0, 1 and 15+ projects
-- [ ] Tabs switch views and keep the selection
+- [x] The project filter turns into `--only` with that project's items
+- [x] Renders 0, 1 and 15+ projects
+- [x] Tabs switch views and keep the selection
 
 **Verification:**
-- [ ] `claude plugin test .`
+- [x] `claude plugin test .`
 
 **Dependencies:** T11, T14
 
 **Files likely touched:** `hooks/pane/projects.tsx`, `hooks/views.test.ts`
 
 **Estimated scope:** S
+
+**Notes:** Picking a project selects exactly its cleanable items (review categories excluded) and returns to the overview with a 'Selected: the items of …' line and Clear (x); a whole-category tick, Select safe or a finished clean ends the filter. Tabs are Buttons on 1 and 2.
 
 ## Task 19: `/sweep` arguments: scan, clean, explain, text
 **Status:** todo

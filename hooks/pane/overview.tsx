@@ -22,6 +22,7 @@ export type OverviewData = {
   bodyColumns: number
   freedThisSession: number
   style: DrawStyle
+  projectFilter: string | null
 }
 
 export type OverviewActions = {
@@ -31,6 +32,9 @@ export type OverviewActions = {
   drill: (id: string) => void
   /** The clean flow's bar, drawn under the table (hooks/pane/clean.tsx). */
   cleanBar: () => unknown
+  /** The tab bar (hooks/pane/projects.tsx). */
+  tabs: () => unknown
+  clearFilter: () => void
 }
 
 const RISK_COLOR = { safe: 'success', caution: 'warning', review: 'error' } as const
@@ -115,6 +119,13 @@ export function Overview(E: El, d: OverviewData, a: OverviewActions) {
   return (
     <Box flexDirection="column" gap={1}>
       {Header(E, d, a)}
+      {a.tabs() as never}
+      {d.projectFilter && (
+        <Box key="filter" gap={2}>
+          <Text color="suggestion" wrap="truncate-middle">{`Selected: the items of ${d.projectFilter}`}</Text>
+          <E.Button key="clear-filter" label="Clear" hotkey="x" onPress={() => a.clearFilter()} />
+        </Box>
+      )}
       {!scan && d.status !== 'scanning' && !d.error && <Text dimColor>No scan yet. Press r to scan.</Text>}
       {scan && (
         <Box key="footprint-section" flexDirection="column">

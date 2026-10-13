@@ -8,7 +8,8 @@ import type { Elements, EngineInterface, Register } from 'claude-code'
 import type { Flow, Progress, ScanResult, ScanStatus, View, CleanResult } from '../types'
 import { cleanArgv, formatBytes, parseClean, parseScan, progressOf, scanArgv, takeLines, textArgv } from './engine-client'
 import { resolveStyle, type ChartStyle, type TerminalEnv } from '../charts/terminal'
-import { ago, onlyIds, safeIds, selectedIds, toggle, toggleItem } from './pane/model'
+import { ago, onlyIds, projectSelection, safeIds, selectedIds, toggle, toggleItem } from './pane/model'
+import { Projects, Tabs } from './pane/projects'
 import { Category } from './pane/category'
 import { CleanBar } from './pane/clean'
 import { Overview } from './pane/overview'
@@ -30,6 +31,7 @@ const selectedItems = atom({ plugin: 'sweep', key: 'selectedItems' } as const, {
 const flow = atom({ plugin: 'sweep', key: 'flow' } as const, 'idle' as Flow)
 const dry = atom({ plugin: 'sweep', key: 'dry' } as const, null as CleanResult | null)
 const freed = atom({ plugin: 'sweep', key: 'freedThisSession' } as const, 0)
+const projectFilter = atom({ plugin: 'sweep', key: 'projectFilter' } as const, null as string | null)
 const outcome = atom({ plugin: 'sweep', key: 'result' } as const, null as CleanResult | null)
 const cleaning = atom({ plugin: 'sweep', key: 'cleaning' } as const, null as { removed: number; freed: number } | null)
 const cleanError = atom({ plugin: 'sweep', key: 'cleanError' } as const, null as string | null)
@@ -122,6 +124,7 @@ async function confirmClean($: EngineInterface) {
     await update($, freed, (n) => n + result.freedBytes)
     await update($, selected, () => [])
     await update($, selectedItems, () => ({}))
+    await update($, projectFilter, () => null)
     await update($, dry, () => null)
     await update($, flow, () => 'done')
     void rescan($)
@@ -198,6 +201,7 @@ export const register: Register = (on, options) => {
       bodyColumns: e.props.bodyColumns,
       freedThisSession: await read($, freed),
       style: resolveStyle(chartStyle, terminal, !!Raster),
+      projectFilter: await read($, projectFilter),
     }
     const currentFlow = await read($, flow)
     const shown = await read($, dry)
@@ -209,13 +213,33 @@ export const register: Register = (on, options) => {
       dry: shown, result: done, removedSoFar: progressNow?.removed ?? 0, freedSoFar: progressNow?.freed ?? 0,
       error: cleanFailure, freedThisSession: data.freedThisSession,
       }, {
-      selectSafe: () => void (result && update($, selected, () => safeIds(result))),
+      selectSafe: () => void (result && Promise.all([update($, selected, () => safeIds(result)), update($, selectedItems, () => ({})), update($, projectFilter, () => null)])),
       clean: () => void startClean($),
       confirm: () => void confirmClean($),
       cancel: () => void Promise.all([update($, flow, () => 'idle'), update($, dry, () => null)]),
       back: () => void Promise.all([update($, flow, () => 'idle'), update($, cleanError, () => null)]),
       })
     const currentView = await read($, view)
+    const tab = (v: 'overview' | 'projects') => void update($, view, () => v)
+    const tabs = () => Tabs(E, currentView === 'projects' ? 'projects' : 'overview', { tab })
+    if (currentView === 'projects' && result) {
+      const { Box } = E
+      return (
+        <Box flexDirection="column" gap={1}>
+          {tabs()}
+          {Projects(E, { scan: result, bodyColumns: data.bodyColumns, style: data.style }, {
+            pick: (path) => void (async () => {
+              const next = projectSelection(result, path)
+              await update($, selected, () => next.selected)
+              await update($, selectedItems, () => next.selectedItems)
+              await update($, projectFilter, () => path)
+              await update($, view, () => 'overview')
+            })(),
+          })}
+          {cleanBar() as never}
+        </Box>
+      )
+    }
     const focusedId = await read($, focusId)
     const focused = result?.categories.find((c) => c.id === focusedId)
     if (currentView === 'category' && result && focused) {
@@ -233,12 +257,15 @@ export const register: Register = (on, options) => {
       rescan: () => void rescan($),
       // A whole-category tick drops any item list the drill-down left for it.
       toggle: (id) => void Promise.all([
+        update($, projectFilter, () => null),
         update($, selected, (list) => toggle(list, id)),
         update($, selectedItems, (items) => Object.fromEntries(Object.entries(items).filter(([k]) => k !== id))),
       ]),
-      selectSafe: () => void (result && update($, selected, () => safeIds(result))),
+      selectSafe: () => void (result && Promise.all([update($, selected, () => safeIds(result)), update($, selectedItems, () => ({})), update($, projectFilter, () => null)])),
       drill: (id) => void Promise.all([update($, focusId, () => id), update($, view, () => 'category')]),
       cleanBar,
+      tabs,
+      clearFilter: () => void Promise.all([update($, projectFilter, () => null), update($, selected, () => []), update($, selectedItems, () => ({}))]),
     })
   })
 }
