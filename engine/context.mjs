@@ -3,9 +3,27 @@
 
 import os from 'node:os';
 import path from 'node:path';
+import { execFile } from 'node:child_process';
 
-import { alive, encodeProject, ls, readJson, sh, sizeOf } from './fsx.mjs';
+import { alive, encodeProject, limit, ls, readJson, sh, stat } from './fsx.mjs';
 import { createGuard } from './guard.mjs';
+
+// `du -k` of a folder, or one pass over a tree with `-d depth`: path → bytes.
+// du exits non-zero on unreadable folders but still prints what it measured.
+function du(args) {
+  return new Promise((resolve) => {
+    execFile('du', ['-k', ...args], { maxBuffer: 256 << 20 }, (_err, stdout) => {
+      const sizes = new Map();
+  const pool = limit(8);
+  const pending = [];
+      for (const line of (stdout || '').split('\n')) {
+        const tab = line.indexOf('\t');
+        if (tab > 0) sizes.set(line.slice(tab + 1), parseInt(line, 10) * 1024);
+      }
+      resolve(sizes);
+    });
+  });
+}
 
 export function createContext({ env = process.env, days = null, force = false } = {}) {
   const home = env.HOME || os.homedir();
@@ -18,6 +36,8 @@ export function createContext({ env = process.env, days = null, force = false } 
   const memo = new Map();
   const once = (key, fn) => { if (!memo.has(key)) memo.set(key, fn()); return memo.get(key); };
   const sizes = new Map();
+  const pool = limit(8);
+  const pending = [];
 
   const ctx = {
     home, claudeDir, tmpBase, tmpRoot, cliVersions, force,
@@ -26,9 +46,24 @@ export function createContext({ env = process.env, days = null, force = false } 
     // For deletions git makes (`git worktree remove`): the same rules, checked first.
     check: (p) => guard.check(path.resolve(p)),
     days: (dflt) => (Number.isFinite(days) ? days : dflt),
-    // Measured once per path per scan.
+    // Measure whole trees once, in parallel: [[root, depth], ...]. Not awaited by
+    // scan(): a size inside a tree waits for that tree's pass instead.
+    prefetch: (roots) => Promise.all(roots.map(([root, depth]) => {
+      const done = du(['-d', String(depth), root]).then((map) => {
+        for (const [p, bytes] of map) if (!sizes.has(p)) sizes.set(p, Promise.resolve(bytes));
+      });
+      pending.push({ root, depth, done });
+      return done;
+    })),
+    prefetched: () => sizes.size,
+    // A file's size, a prefetched folder's, or one `du -sk` (eight at a time); once per path per scan.
     size: async (p) => {
-      if (!sizes.has(p)) sizes.set(p, sizeOf(p));
+      const tree = pending.find(({ root, depth }) => p === root || (p.startsWith(root + path.sep) && path.relative(root, p).split(path.sep).length <= depth));
+      if (tree) await tree.done;
+      if (!sizes.has(p)) {
+        const s = stat(p);
+        sizes.set(p, !s ? Promise.resolve(0) : !s.isDirectory() ? Promise.resolve(s.size) : pool(() => du(['-s', p]).then((m) => m.get(p) ?? 0)));
+      }
       return sizes.get(p);
     },
 

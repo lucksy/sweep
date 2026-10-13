@@ -1,4 +1,4 @@
-import { sh } from '../fsx.mjs';
+import { sh, shAsync } from '../fsx.mjs';
 import { isClaudeWorktree, repos, uniqueCommits } from '../git.mjs';
 
 export default {
@@ -11,11 +11,13 @@ export default {
     claude: 'The branch is deleted only when Claude removes the worktree itself.',
     sweep: 'Deletes worktree-* branches that are not checked out anywhere and whose commits all exist on another branch or remote. Prunes records of Claude worktrees whose directory no longer exists. Branches with unique commits are listed but kept.',
   }),
-  scan: async (ctx) => repos(ctx).flatMap((repo) => {
+  scan: async (ctx) => (await Promise.all((await repos(ctx)).map(async (repo) => {
     const checkedOut = new Set(repo.worktrees.map((w) => w.branch).filter(Boolean));
-    const refs = sh('git', ['-C', repo.main, 'for-each-ref', '--format=%(refname:short)', 'refs/heads/worktree-*']);
-    const branches = (refs ? refs.split('\n').filter(Boolean) : []).filter((b) => !checkedOut.has(b)).map((b) => {
-      const unique = uniqueCommits(repo.main, b);
+    const refs = await shAsync('git', ['-C', repo.main, 'for-each-ref', '--format=%(refname:short)', 'refs/heads/worktree-*']);
+    const names = (refs ? refs.split('\n').filter(Boolean) : []).filter((b) => !checkedOut.has(b));
+    const counts = await Promise.all(names.map((b) => uniqueCommits(repo.main, b)));
+    const branches = names.map((b, n) => {
+      const unique = counts[n];
       const reason = unique === null ? 'git-error' : unique > 0 ? 'unique-commits' : null;
       return {
         path: `${repo.main} → ${b}`, label: b, project: repo.main, bytes: 0, ageDays: null,
@@ -30,7 +32,7 @@ export default {
       detail: { prune: true }, internal: { repo: repo.main, prune: true },
     }));
     return [...branches, ...stale];
-  }),
+  }))).flat(),
   clean: (item) => {
     if (item.internal.prune) sh('git', ['-C', item.internal.repo, 'worktree', 'prune']);
     else if (sh('git', ['-C', item.internal.repo, 'branch', '-D', item.internal.branch]) === null) throw new Error('git branch -D failed');

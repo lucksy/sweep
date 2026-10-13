@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import { CATEGORIES } from './categories/index.mjs';
-import { fmt, itemId, readJson } from './fsx.mjs';
+import { fmt, isDir, itemId, ls, readJson } from './fsx.mjs';
 import { ageBuckets, bigTmpFiles, computeWarnings, disk, footprint, rollupProjects, settingsState, worktreeCounts } from './footprint.mjs';
 
 export const SCHEMA = 1;
@@ -66,8 +66,15 @@ export const categoryIds = () => CATEGORIES.map((c) => c.id);
 
 export async function scan(ctx, { ids = null, options = {} } = {}) {
   const started = Date.now();
-  const categories = [];
-  for (const cat of CATEGORIES.filter((c) => !ids || ids.includes(c.id))) categories.push(await scanCategory(ctx, cat));
+  // Every tree measured once, in parallel, while the categories run; worktree
+  // folders are found from the project list so their pass starts at once.
+  const worktreeRoots = [...new Set(ctx.projectPaths().map((d) => path.join(d, '.claude', 'worktrees')))].filter(isDir);
+  // Each worktree gets its own pass, so big ones are measured side by side.
+  const worktreeDirs = worktreeRoots.flatMap((r) => ls(r).map((n) => path.join(r, n))).filter(isDir);
+  const trees = ctx.prefetch([[ctx.claudeDir, 5], [ctx.tmpRoot, 2], [path.dirname(ctx.cliVersions), 2], ...worktreeDirs.map((d) => [d, 1])]);
+  const bigFiles = bigTmpFiles(ctx);
+  const categories = await Promise.all(CATEGORIES.filter((c) => !ids || ids.includes(c.id)).map((cat) => scanCategory(ctx, cat)));
+  await trees;
   const sum = (list, pick) => list.reduce((t, x) => t + pick(x), 0);
   const diskNow = disk(ctx.home);
   return {
@@ -87,7 +94,7 @@ export async function scan(ctx, { ids = null, options = {} } = {}) {
     categories,
     projects: rollupProjects(categories),
     ageBuckets: ageBuckets(categories),
-    warnings: computeWarnings({ disk: diskNow, bigFiles: bigTmpFiles(ctx), settingsState: settingsState(ctx.claudeDir), worktreeCounts: worktreeCounts(ctx) }),
+    warnings: computeWarnings({ disk: diskNow, bigFiles: await bigFiles, settingsState: settingsState(ctx.claudeDir), worktreeCounts: await worktreeCounts(ctx) }),
     info: info(ctx),
   };
 }

@@ -3,7 +3,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
-import { execFileSync } from 'node:child_process';
+import { execFile, execFileSync } from 'node:child_process';
 
 export const DAY = 86_400_000;
 export const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -14,6 +14,24 @@ export function sh(cmd, args) {
   } catch {
     return null;
   }
+}
+
+// The same as sh(), without blocking: resolves stdout, or null on failure.
+export function shAsync(cmd, args) {
+  return new Promise((resolve) => {
+    execFile(cmd, args, { encoding: 'utf8', maxBuffer: 64 << 20 }, (err, stdout) => resolve(err ? null : stdout.trim()));
+  });
+}
+
+// At most `n` promises from `fn` in flight at once.
+export function limit(n) {
+  let active = 0;
+  const queue = [];
+  const next = () => { if (active < n && queue.length) { active++; queue.shift()(); } };
+  return (fn) => new Promise((resolve, reject) => {
+    queue.push(() => fn().then(resolve, reject).finally(() => { active--; next(); }));
+    next();
+  });
 }
 
 export const stat = (p) => { try { return fs.lstatSync(p); } catch { return null; } };

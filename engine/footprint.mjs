@@ -4,7 +4,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-import { isDir, ls, sh, stat } from './fsx.mjs';
+import { isDir, ls, sh, shAsync, stat } from './fsx.mjs';
 import { repos } from './git.mjs';
 
 const GB = 1024 ** 3;
@@ -18,10 +18,11 @@ export async function footprint(ctx) {
   let claudeJson = 0;
   for (const n of ls(ctx.home).filter((x) => x === '.claude.json' || x.startsWith('.claude.json.'))) claudeJson += await ctx.size(path.join(ctx.home, n));
   let worktrees = 0;
-  for (const repo of repos(ctx)) {
+  for (const repo of await repos(ctx)) {
     for (const dir of repo.projectDirs) {
       const root = path.join(dir, '.claude', 'worktrees');
-      if (isDir(root)) worktrees += await ctx.size(root);
+      // The sum of each worktree's own pass (scan() measures them one by one).
+      for (const n of ls(root)) worktrees += await ctx.size(path.join(root, n));
     }
   }
   const parts = [
@@ -46,8 +47,9 @@ export function disk(home) {
 }
 
 // Files in the temp root at or over the runaway size (sparse files count by their size).
-export function bigTmpFiles(ctx, min = RUNAWAY_BYTES) {
-  const out = sh('find', [ctx.tmpRoot, '-type', 'f', '-size', `+${Math.floor(min / 1024) - 1}k`]);
+// Task output sits at <project>/<session>/tasks/<file>; dependency folders are skipped.
+export async function bigTmpFiles(ctx, min = RUNAWAY_BYTES) {
+  const out = await shAsync('find', [ctx.tmpRoot, '-maxdepth', '5', '-name', 'node_modules', '-prune', '-o', '-type', 'f', '-size', `+${Math.floor(min / 1024) - 1}k`, '-print']);
   return (out ? out.split('\n') : []).map((p) => ({ path: p, bytes: stat(p)?.size ?? 0 })).filter((f) => f.bytes >= min);
 }
 
@@ -61,8 +63,8 @@ export function settingsState(claudeDir) {
   return days === undefined || (Number.isInteger(days) && days >= 1) ? 'ok' : 'invalid';
 }
 
-export function worktreeCounts(ctx) {
-  return repos(ctx).map((r) => ({ repo: r.main, count: r.worktrees.filter((w) => w.path?.includes(`${path.sep}.claude${path.sep}worktrees${path.sep}`)).length }));
+export async function worktreeCounts(ctx) {
+  return (await repos(ctx)).map((r) => ({ repo: r.main, count: r.worktrees.filter((w) => w.path?.includes(`${path.sep}.claude${path.sep}worktrees${path.sep}`)).length }));
 }
 
 const fmtGB = (b) => `${(b / GB).toFixed(1)}G`;

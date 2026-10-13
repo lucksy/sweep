@@ -138,7 +138,7 @@ Make `scan --json` emit the schema-1 contract (SPEC-engine §Contract). Add `rea
 **Notes:** Real machine: footprint 7.42G (worktrees 2.75G, plugins 2.08G, transcripts 1.37G), disk 1.1T free, no warnings. The extra measuring pushed a full scan to 93 s; T6 brings it down.
 
 ## Task 6: Scan speed: async sizes, memoized, ≤ 15 s
-**Status:** todo
+**Status:** done · started 2026-10-13 · done 2026-10-13
 
 **Description:**
 - Replace the synchronous `du` calls with an async pool (concurrency 8), memoized per path.
@@ -148,18 +148,20 @@ Make `scan --json` emit the schema-1 contract (SPEC-engine §Contract). Add `rea
 Measure on this machine: baseline 28–43 s, target ≤ 15 s.
 
 **Acceptance criteria:**
-- [ ] Same contract output on the fixture as before (byte-identical apart from `durationMs` and `scannedAt`)
-- [ ] Three real-machine runs at ≤ 15 s each, with the timings recorded in this task
+- [x] Same contract output on the fixture as before (byte-identical apart from `durationMs` and `scannedAt`)
+- [x] Three real-machine runs at ≤ 15 s each, with the timings recorded in this task
 
 **Verification:**
-- [ ] `node --test "tests/engine/*.test.mjs"`
-- [ ] `time bin/sweep scan --json > /dev/null` ×3
+- [x] `node --test "tests/engine/*.test.mjs"`
+- [x] `time bin/sweep scan --json > /dev/null` ×3
 
 **Dependencies:** T5
 
 **Files likely touched:** `engine/fsx.mjs`, `engine/git.mjs`, `engine/scan.mjs`
 
 **Estimated scope:** S
+
+**Notes:** Real-machine full scan (2026-10-13): 11.77 s, 10.97 s, 11.35 s (baseline 28–43 s for clearx; 56–93 s after T5). What did it: one du pass per tree (each worktree on its own) started before anything else; sizes wait only for the pass that covers them; git calls async, eight at a time, one rev-parse per project; categories in parallel; runaway-output search limited to 5 levels and run alongside. Fixture output is identical to T5.
 
 ## Task 7: Clean v2: `--only`, re-scan before delete, JSON result, progress, no files written
 **Status:** todo
