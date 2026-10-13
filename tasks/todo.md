@@ -295,7 +295,7 @@ Removed 2026-10-13: sweep stores no data (SPEC-history.md). Kept as a number onl
 **Notes:** No trend chart (removed with history). The pixel treemap carries no words in the picture, so its legend names every tile with its size in the tile's color (the cell twin's legend is passed in by the caller); alt and hit boxes are the twin's. charts/png.ts is copied from agent-skills-mods (MIT, the author's own).
 
 ## Task 13: Skills: `/sweep:scan`, `/sweep:clean`, `/sweep:explain`
-**Status:** todo
+**Status:** done · started 2026-10-13 · done 2026-10-13
 
 **Description:** Rewrite the three SKILL.md files per SPEC-skills:
 - the new engine path
@@ -306,19 +306,21 @@ Removed 2026-10-13: sweep stores no data (SPEC-history.md). Kept as a number onl
 Remove the old `skills/list` and `skills/clearx`.
 
 **Acceptance criteria:**
-- [ ] `claude -p --plugin-dir .` lists exactly the three skills
-- [ ] In a sandboxed session, declining the confirmation deletes nothing (a second scan shows the same items)
-- [ ] No skill text names `rm` or a git delete command
+- [x] `claude -p --plugin-dir .` lists exactly the three skills
+- [ ] In a sandboxed session, declining the confirmation deletes nothing (a second scan shows the same items) (manual, Checkpoint C)
+- [x] No skill text names `rm` or a git delete command
 
 **Verification:**
-- [ ] `claude plugin validate --strict .`
-- [ ] Manual: `/sweep:clean safe` with the sandbox env
+- [x] `claude plugin validate --strict .`
+- [ ] Manual: `/sweep:clean safe` with the sandbox env (Checkpoint C)
 
 **Dependencies:** T8
 
 **Files likely touched:** `skills/scan/SKILL.md`, `skills/clean/SKILL.md`, `skills/explain/SKILL.md`
 
 **Estimated scope:** S
+
+**Notes:** The 'declining deletes nothing' check needs an interactive session to answer AskUserQuestion; it is covered structurally (tests/engine/skills.test.mjs: dry run before the question, --yes only after) and left as a manual check for Checkpoint C. The old list/clearx skills were already replaced in T1.
 
 ## Checkpoint C: Everything except the UI
 - [ ] `sweep scan`, `sweep clean safe` (dry run) work in a terminal

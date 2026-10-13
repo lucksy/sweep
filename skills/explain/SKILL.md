@@ -1,13 +1,23 @@
 ---
 name: explain
-description: Entry point for sweep, which finds storage Claude Code leaves behind. With no argument or "list" it lists every category; "explain <id>" tells where one comes from, what Claude Code cleans itself and every item found; "clean ..." cleans after confirmation.
-argument-hint: "[list | explain <id> | clean <id...|safe|all>]"
+description: Explain one kind of storage Claude Code leaves behind: where it comes from, what Claude Code cleans on its own, what sweep would remove, and every item found. Use when the user asks what a sweep category is (worktrees, plugin-versions, tmp-sessions, transcripts, file-history, ...) or whether it is safe to delete, or runs /sweep:explain.
+argument-hint: "<category>"
 allowed-tools: Bash(node ${CLAUDE_PLUGIN_ROOT}/engine/sweep.mjs *)
 ---
 
-Arguments: `$ARGUMENTS`
+The category is `$ARGUMENTS`. If it is empty or unknown, run `node ${CLAUDE_PLUGIN_ROOT}/engine/sweep.mjs help` and ask which category the user means.
 
-- Empty, `list`, `-list` or `--list`: do what `/sweep:scan` does. Run `node ${CLAUDE_PLUGIN_ROOT}/engine/sweep.mjs list --details` and report the table, where the space is, and what is kept and why.
-- `explain <id>`: run `node ${CLAUDE_PLUGIN_ROOT}/engine/sweep.mjs explain <id>` and relay it: where it comes from, what Claude Code cleans on its own, what sweep removes, and the items found.
-- `clean ...`: follow `/sweep:clean`. Dry run first, ask the user to confirm, then rerun with `--yes`. Never delete files by hand.
-- `help`: run `node ${CLAUDE_PLUGIN_ROOT}/engine/sweep.mjs help`.
+Run:
+
+```
+node ${CLAUDE_PLUGIN_ROOT}/engine/sweep.mjs explain $ARGUMENTS
+```
+
+Relay it plainly:
+
+- **Where it comes from**: what in Claude Code creates it.
+- **What Claude Code cleans itself**: its own cleanup (`cleanupPeriodDays`) and when it does not apply.
+- **What sweep removes**: and what it always keeps.
+- **Found**: the items, the reclaimable total, and for each kept item the reason in plain words.
+
+Finish with whether it is safe to clean and the command: `/sweep:clean $ARGUMENTS`. Do not delete anything from this skill.

@@ -1,28 +1,31 @@
 ---
 name: clean
-description: Clean storage Claude Code leaves behind, one category at a time or all safe ones, after a dry run and the user's confirmation. Use when the user runs /sweep:clean or asks to free disk space taken by Claude Code worktrees, node_modules, temp folders, plugin cache or old transcripts.
-argument-hint: "<id...|safe|all> [--days N] [--force]"
+description: Free disk space Claude Code leaves behind, one category at a time or all safe ones, always as a dry run first and only after the user confirms. Use when the user runs /sweep:clean or asks to clean up, free space, or delete old worktrees, node_modules, temp folders, the plugin cache or old transcripts.
+argument-hint: "<category...|safe|all> [--days N] [--force]"
 allowed-tools: Bash(node ${CLAUDE_PLUGIN_ROOT}/engine/sweep.mjs *)
 ---
 
 Arguments: `$ARGUMENTS`
 
-If no category was given, run `node ${CLAUDE_PLUGIN_ROOT}/engine/sweep.mjs list` and ask which categories to clean, suggesting `safe`.
+If no category was given, run `node ${CLAUDE_PLUGIN_ROOT}/engine/sweep.mjs scan`, show the table, and ask which categories to clean, suggesting `safe`.
 
-1. Dry run first, never skip it:
+1. **Dry run first, always.** Never skip it.
 
    ```
    node ${CLAUDE_PLUGIN_ROOT}/engine/sweep.mjs clean $ARGUMENTS
    ```
 
-2. Show the user what would be removed and how much space it frees. Call out anything in a **caution** category in plain words:
-   - `worktrees`: the agent's checkout is deleted. Only clean worktrees with nothing unsaved are removed. With `--force`, worktrees whose commits exist only on their branch are removed too, and the branch is kept.
+2. **Show what would go**: the items per category and the total it would free. For each **caution** category in it, say in plain words what the user loses:
+   - `worktrees`: the agents' checkouts are deleted. Only worktrees with nothing unsaved are removed; with `--force`, worktrees whose commits exist only on their branch go too, and that branch is kept, so no commit is lost.
    - `transcripts`, `orphan-projects`: those sessions can no longer be resumed. Memory is kept.
    - `file-history`: rewind is lost for those sessions.
-   - `plugin-versions`: sessions still running an old plugin version should be restarted.
+   - `plugin-versions`: sessions still running an old plugin version should be restarted afterwards.
 
-3. Ask the user to confirm with AskUserQuestion. Do not continue without a clear yes.
+3. **Ask the user to confirm** with AskUserQuestion. Continue only on a clear yes.
 
-4. On yes, run the same command with `--yes` added, and report what was freed and anything that failed or was kept.
+4. **On yes**, run the same command with `--yes --json` added. Report what was freed, what was kept and why, and anything that failed, from the JSON (`freedBytes`, `removed`, `kept`, `skipped`, `failed`).
 
-Never pass `--force` unless the user asked for it by name. Never delete files by hand; only through this script.
+Rules:
+- Pass `--force` only when the user said "force" themselves.
+- Delete only through this engine command. Never delete files any other way.
+- sweep stores nothing; the status line and the `/sweep` pane show the new numbers after their next scan.
