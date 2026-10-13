@@ -407,23 +407,25 @@ Remove the old `skills/list` and `skills/clearx`.
 **Notes:** Changes from SPEC-pane: Cancel is hotkey n (a Button hotkey is one digit or letter, so Esc can't be one); Dry run and Clean… were one step (both lead to the confirm screen), so there is one Clean… button on c; the 'locked' state is gone with the lock file. The Delete step passes --only with exactly the ids the dry run showed.
 
 ## Task 17: Category drill-down: texts, items, per-item selection, age histogram
-**Status:** todo
+**Status:** done · started 2026-10-13 · done 2026-10-13
 
 **Description:** The drill-down view (SPEC-pane): the creates / claude / sweep texts as `Markdown`, the item list with reasons, per-item toggles feeding `selectedItems`, the age histogram, and Back.
 
 **Acceptance criteria:**
-- [ ] Kept items show their reason and can't be ticked
-- [ ] Unticking an item changes the Clean total and the `--only` list
-- [ ] The histogram matches the category's age buckets
+- [x] Kept items show their reason and can't be ticked
+- [x] Unticking an item changes the Clean total and the `--only` list
+- [x] The histogram matches the category's age buckets
 
 **Verification:**
-- [ ] `claude plugin test .`
+- [x] `claude plugin test .`
 
 **Dependencies:** T12, T16
 
 **Files likely touched:** `hooks/pane/category.tsx`, `hooks/pane/overview.tsx`, `hooks/category.test.ts`
 
 **Estimated scope:** M
+
+**Notes:** Ticking items: an unticked category starts with every item [ ]; a tick picks that item only; ticking all of a category's cleanable items turns it back into a whole-category selection. A whole-category tick in the overview now also drops any item list left from the drill-down.
 
 ## Task 18: Projects view
 **Status:** todo

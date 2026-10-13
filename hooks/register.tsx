@@ -8,7 +8,8 @@ import type { Elements, EngineInterface, Register } from 'claude-code'
 import type { Flow, Progress, ScanResult, ScanStatus, View, CleanResult } from '../types'
 import { cleanArgv, formatBytes, parseClean, parseScan, progressOf, scanArgv, takeLines, textArgv } from './engine-client'
 import { resolveStyle, type ChartStyle, type TerminalEnv } from '../charts/terminal'
-import { ago, onlyIds, safeIds, selectedIds, toggle } from './pane/model'
+import { ago, onlyIds, safeIds, selectedIds, toggle, toggleItem } from './pane/model'
+import { Category } from './pane/category'
 import { CleanBar } from './pane/clean'
 import { Overview } from './pane/overview'
 
@@ -203,22 +204,41 @@ export const register: Register = (on, options) => {
     const done = await read($, outcome)
     const progressNow = await read($, cleaning)
     const cleanFailure = await read($, cleanError)
+    const cleanBar = () => CleanBar(E, {
+      scan: result, flow: currentFlow, selected: data.selected, selectedItems: data.selectedItems,
+      dry: shown, result: done, removedSoFar: progressNow?.removed ?? 0, freedSoFar: progressNow?.freed ?? 0,
+      error: cleanFailure, freedThisSession: data.freedThisSession,
+      }, {
+      selectSafe: () => void (result && update($, selected, () => safeIds(result))),
+      clean: () => void startClean($),
+      confirm: () => void confirmClean($),
+      cancel: () => void Promise.all([update($, flow, () => 'idle'), update($, dry, () => null)]),
+      back: () => void Promise.all([update($, flow, () => 'idle'), update($, cleanError, () => null)]),
+      })
+    const currentView = await read($, view)
+    const focusedId = await read($, focusId)
+    const focused = result?.categories.find((c) => c.id === focusedId)
+    if (currentView === 'category' && result && focused) {
+      return Category(E, { category: focused, selected: data.selected, selectedItems: data.selectedItems, bodyColumns: data.bodyColumns, style: data.style }, {
+        back: () => void update($, view, () => 'overview'),
+        toggleItem: (itemId) => void (async () => {
+          const next = toggleItem(result, await read($, selected), await read($, selectedItems), focused.id, itemId)
+          await update($, selected, () => next.selected)
+          await update($, selectedItems, () => next.selectedItems)
+        })(),
+        cleanBar,
+      })
+    }
     return Overview(E, data, {
       rescan: () => void rescan($),
-      toggle: (id) => void update($, selected, (list) => toggle(list, id)),
+      // A whole-category tick drops any item list the drill-down left for it.
+      toggle: (id) => void Promise.all([
+        update($, selected, (list) => toggle(list, id)),
+        update($, selectedItems, (items) => Object.fromEntries(Object.entries(items).filter(([k]) => k !== id))),
+      ]),
       selectSafe: () => void (result && update($, selected, () => safeIds(result))),
       drill: (id) => void Promise.all([update($, focusId, () => id), update($, view, () => 'category')]),
-      cleanBar: () => CleanBar(E, {
-        scan: result, flow: currentFlow, selected: data.selected, selectedItems: data.selectedItems,
-        dry: shown, result: done, removedSoFar: progressNow?.removed ?? 0, freedSoFar: progressNow?.freed ?? 0,
-        error: cleanFailure, freedThisSession: data.freedThisSession,
-      }, {
-        selectSafe: () => void (result && update($, selected, () => safeIds(result))),
-        clean: () => void startClean($),
-        confirm: () => void confirmClean($),
-        cancel: () => void Promise.all([update($, flow, () => 'idle'), update($, dry, () => null)]),
-        back: () => void Promise.all([update($, flow, () => 'idle'), update($, cleanError, () => null)]),
-      }),
+      cleanBar,
     })
   })
 }

@@ -45,3 +45,34 @@ export function onlyIds(scan: ScanResult, selected: string[], selectedItems: Rec
   if (!selected.some((id) => selectedItems[id])) return null
   return scan.categories.filter((c) => selected.includes(c.id)).flatMap((c) => selectedItems[c.id] ?? c.items.filter((i) => i.cleanable).map((i) => i.id))
 }
+
+/** Kept reasons in plain words (the engine's REASONS, engine/text.mjs). */
+export const REASONS: Record<string, string> = {
+  dirty: 'uncommitted changes',
+  'unique-commits': 'commits on no other branch (--force in chat removes the folder, keeps the branch)',
+  locked: 'locked by a running agent',
+  'live-session': 'belongs to a running session',
+  'owned-by-live-session': 'created during a session still running in this repo (--force in chat)',
+  'git-error': 'git could not read it',
+  'running-version': 'used by the running CLI version',
+  'in-use': 'marked in use by a session',
+  recent: 'changed in the last day',
+  'unknown-origin': 'original folder unknown (--force in chat)',
+  review: 'needs review (--force in chat)',
+}
+
+/** Whether an item is ticked: its category is, and no item list leaves it out. */
+export const itemTicked = (selected: string[], selectedItems: Record<string, string[]>, categoryId: string, itemId: string) =>
+  selected.includes(categoryId) && (!selectedItems[categoryId] || selectedItems[categoryId]!.includes(itemId))
+
+/** Ticks or unticks one item, keeping `selected` and `selectedItems` consistent. */
+export function toggleItem(scan: ScanResult, selected: string[], selectedItems: Record<string, string[]>, categoryId: string, itemId: string) {
+  const all = scan.categories.find((c) => c.id === categoryId)?.items.filter((i) => i.cleanable).map((i) => i.id) ?? []
+  const current = selected.includes(categoryId) ? selectedItems[categoryId] ?? all : []
+  const next = current.includes(itemId) ? current.filter((id) => id !== itemId) : [...current, itemId]
+  const items = { ...selectedItems }
+  delete items[categoryId]
+  if (!next.length) return { selected: selected.filter((id) => id !== categoryId), selectedItems: items }
+  if (next.length < all.length) items[categoryId] = all.filter((id) => next.includes(id))
+  return { selected: selected.includes(categoryId) ? selected : [...selected, categoryId], selectedItems: items }
+}
