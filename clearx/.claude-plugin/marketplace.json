@@ -1,0 +1,8 @@
+{
+  "name": "clearx",
+  "description": "clearx: list and clean storage Claude Code leaves behind.",
+  "owner": { "name": "lucksy" },
+  "plugins": [
+    { "name": "clearx", "source": "./", "description": "List and clean storage Claude Code leaves behind." }
+  ]
+}

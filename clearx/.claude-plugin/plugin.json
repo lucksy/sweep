@@ -1,0 +1,8 @@
+{
+  "name": "clearx",
+  "version": "0.1.0",
+  "description": "Find and clean the storage Claude Code leaves behind: agent and workflow worktrees with their node_modules, temp scratchpads, superseded plugin versions, old transcripts, checkpoints, old CLI binaries and stray config copies. Dry run by default; never touches unsaved work.",
+  "author": { "name": "lucksy" },
+  "license": "MIT",
+  "keywords": ["cleanup", "disk", "storage", "worktrees", "node_modules", "maintenance"]
+}

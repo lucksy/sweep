@@ -1,0 +1,533 @@
+---
+plan: sweep
+created: 2026-10-13
+---
+
+# Tasks: sweep
+
+Paths are relative to the project root, `~/Projects/clear` (no rename). sweep stores no data: no task may add a cache, history, lock or log file, or use `$.store`. Unless a task says otherwise, every task is verified with:
+- `node --test tests/`
+- `claude plugin validate --strict .`
+- for tasks that touch `hooks/` or `charts/`: `npx -p typescript tsc -p .` and `claude plugin test .`
+
+## Task 1: Scaffold sweep from clearx and add the sandbox test harness
+**Status:** todo
+
+**Description:** In this folder, create the sweep plugin from clearx without changing behavior:
+- move `clearx/scripts/clearx.mjs` to `engine/sweep.mjs`
+- write the manifest and marketplace with the name `sweep`
+- add `bin/sweep`
+- add `skills/` copied with new names (content updated in T13)
+
+Then turn the clearx sandbox script into `tests/fixtures/sandbox.mjs`, with the first integration test reproducing the clearx sandbox run. Leave `clearx/` in place until T23.
+
+**Acceptance criteria:**
+- [ ] `bin/sweep scan` prints the same categories and numbers as `clearx list` on this machine
+- [ ] `tests/fixtures/sandbox.mjs` builds the fixture (dirty, unique-commit, clean and orphan worktrees; merged and unique branches; memory; protected files), and `tests/engine/sandbox.test.mjs` asserts what clean keeps and removes
+- [ ] `claude plugin validate --strict .` passes for `sweep`
+
+**Verification:**
+- [ ] `node --test tests/`
+- [ ] `bin/sweep scan` vs `clearx/bin/clearx list` (diff of category rows)
+
+**Dependencies:** None
+
+**Files likely touched:** `.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json`, `engine/sweep.mjs`, `bin/sweep`, `tests/fixtures/sandbox.mjs`, `tests/engine/sandbox.test.mjs`
+
+**Estimated scope:** M
+
+## Task 2: Mod spike: `/sweep` shows the engine's total in a pane
+**Status:** todo
+
+**Description:** The thinnest vertical slice through the riskiest part:
+- a mod that registers `/sweep`
+- runs `engine/sweep.mjs scan --json` through `$.process.run` (the clearx JSON for now)
+- opens a pane showing `X reclaimable · scanned at …`
+
+While doing it, answer Q1–Q3 from `claude-code.d.ts` and a quick experiment, and record the answers in `tasks/plan.md`.
+
+**Acceptance criteria:**
+- [ ] `/sweep` in `claude --plugin-dir .` opens a pane with the real reclaimable total
+- [ ] Q1, Q2, Q3 answered in `tasks/plan.md`, with the API names to use
+- [ ] One `hooks/*.test.ts` covers the command and the pane render
+
+**Verification:**
+- [ ] `claude plugin test .` and `npx -p typescript tsc -p .`
+- [ ] Manual: `/sweep` in this terminal
+
+**Dependencies:** T1
+
+**Files likely touched:** `hooks/hooks.json`, `hooks/register.tsx`, `hooks/engine-client.ts`, `types/index.d.ts`, `hooks/pane.test.ts`
+
+**Estimated scope:** M
+
+## Checkpoint A: Foundation
+- [ ] All tests pass and validate is clean
+- [ ] `/sweep` shows a real number in a pane
+- [ ] Q1–Q3 answered; human review before Phase 1
+
+## Task 3: Guard rails as their own module, with tests that try to break them
+**Status:** todo
+
+**Description:** Extract `rm()` into `engine/guard.mjs`, with the allowlist and protected paths of SPEC-engine §Behavior 5. Add a table-driven test that tries every protected path, paths outside the allowlist, `..` traversal, symlinks pointing out of the allowlist, and `~/.claude.json` itself.
+
+**Acceptance criteria:**
+- [ ] Every protected path and every outside path is refused, with a clear error
+- [ ] A symlink inside `~/.claude` pointing at `~/Documents` is removed as a link, and its target is untouched
+- [ ] Allowed paths are removed
+
+**Verification:**
+- [ ] `node --test tests/engine/guard.test.mjs`
+
+**Dependencies:** T1
+
+**Files likely touched:** `engine/guard.mjs`, `engine/sweep.mjs`, `tests/engine/guard.test.mjs`
+
+**Estimated scope:** S
+
+## Task 4: JSON contract schema 1: categories in files, reason codes, stable item ids
+**Status:** todo
+
+**Description:** Split the engine per SPEC.md Project Structure:
+- `scan.mjs`, `git.mjs`, `live.mjs`, `fsx.mjs`
+- one file per category in `engine/categories/`
+
+Make `scan --json` emit the schema-1 contract (SPEC-engine §Contract). Add `reason` codes to every kept item, plus stable `id`, `label`, `project` and `detail`. This is a mostly mechanical move; behavior is unchanged except for the new fields.
+
+**Acceptance criteria:**
+- [ ] A contract test checks every key and type of `scan --json` against the fixture
+- [ ] Every kept row of the SPEC-engine category table returns its reason code in the sandbox
+- [ ] Item ids are identical across two scans of an unchanged fixture
+
+**Verification:**
+- [ ] `node --test tests/engine/`
+
+**Dependencies:** T3
+
+**Files likely touched:** `engine/scan.mjs`, `engine/git.mjs`, `engine/live.mjs`, `engine/fsx.mjs`, `engine/categories/*.mjs` (13 small files, moved verbatim), `tests/engine/contract.test.mjs`
+
+**Estimated scope:** L (mechanical; if it runs long, split into T4 "infra modules" and a new task "category files")
+
+## Task 5: Footprint, disk, per-project rollup, age buckets, warnings
+**Status:** todo
+
+**Description:** Add the contract fields `footprint`, `disk`, `projects`, `ageBuckets` and `warnings`: `runaway-output`, `low-disk`, `sweep-paused` and `many-worktrees` (SPEC-engine §Footprint, §Contract).
+
+**Acceptance criteria:**
+- [ ] Footprint parts sum to `totalBytes` in the fixture
+- [ ] Each warning has a fixture case that produces it and one that doesn't
+- [ ] Projects roll up per category, and `exists: false` is set for a deleted path
+
+**Verification:**
+- [ ] `node --test tests/engine/footprint.test.mjs`
+
+**Dependencies:** T4
+
+**Files likely touched:** `engine/footprint.mjs`, `engine/scan.mjs`, `tests/engine/footprint.test.mjs`, `tests/fixtures/sandbox.mjs`
+
+**Estimated scope:** M
+
+## Task 6: Scan speed: async sizes, memoized, ≤ 15 s
+**Status:** todo
+
+**Description:**
+- Replace the synchronous `du` calls with an async pool (concurrency 8), memoized per path.
+- Run git calls per repo in parallel.
+- Record `durationMs`.
+
+Measure on this machine: baseline 28–43 s, target ≤ 15 s.
+
+**Acceptance criteria:**
+- [ ] Same contract output on the fixture as before (byte-identical apart from `durationMs` and `scannedAt`)
+- [ ] Three real-machine runs at ≤ 15 s each, with the timings recorded in this task
+
+**Verification:**
+- [ ] `node --test tests/engine/`
+- [ ] `time bin/sweep scan --json > /dev/null` ×3
+
+**Dependencies:** T5
+
+**Files likely touched:** `engine/fsx.mjs`, `engine/git.mjs`, `engine/scan.mjs`
+
+**Estimated scope:** S
+
+## Task 7: Clean v2: `--only`, re-scan before delete, JSON result, progress, no files written
+**Status:** todo
+
+**Description:**
+- `clean()` per SPEC-engine §Behavior 2–4: item selection with `--only`, re-scan before deleting, `skipped` with `no-longer-cleanable` / `unknown-id`, and the clean contract JSON. No lock file.
+- NDJSON `--progress` on stderr for both scan and clean.
+- The "stores nothing" test (§Behavior 7).
+
+**Acceptance criteria:**
+- [ ] `--only` deletes exactly the named items; an item made dirty after the scan lands in `skipped`
+- [ ] Two `clean --yes` started together on one fixture both finish, removing each item once
+- [ ] Scan and clean create no new files (sandbox listing before and after)
+- [ ] `--progress` writes only NDJSON to stderr, and stdout stays pure JSON
+
+**Verification:**
+- [ ] `node --test tests/engine/clean.test.mjs`
+
+**Dependencies:** T4
+
+**Files likely touched:** `engine/clean.mjs`, `engine/scan.mjs`, `tests/engine/clean.test.mjs`
+
+**Estimated scope:** M
+
+## Checkpoint B: Engine
+- [ ] Sandbox suite proves every kept reason, the guard, `--only`, concurrent cleans, no files written and `--force` limits
+- [ ] Real-machine scan ≤ 15 s (T6 timings)
+- [ ] Human review of the contract before the UI is built on it
+
+## Task 8: CLI text report, exit codes, aliases
+**Status:** todo
+
+**Description:** `engine/text.mjs` and argument handling per SPEC-cli:
+- the header (footprint, reclaimable, disk free)
+- the footprint line
+- warnings first
+- kept items grouped by reason
+- middle-truncated paths, width from the terminal
+- every alias and exit code
+
+**Acceptance criteria:**
+- [ ] Snapshot tests of `scan`, `scan --details`, `explain`, `clean` (dry run) and `clean --yes` with `NO_COLOR=1` at 100 columns
+- [ ] Every exit code (0–3) produced by a test
+- [ ] `--json` output equals the engine result, with nothing else on stdout
+
+**Verification:**
+- [ ] `node --test tests/cli/`
+
+**Dependencies:** T5, T7
+
+**Files likely touched:** `engine/text.mjs`, `engine/sweep.mjs`, `tests/cli/text.test.mjs`, `tests/cli/exit.test.mjs`
+
+**Estimated scope:** M
+
+## Task 9: History (removed)
+**Status:** blocked
+
+Removed 2026-10-13: sweep stores no data (SPEC-history.md). Kept as a number only, so task ids stay stable; nothing to build.
+
+## Task 10: Charts base: palette, Raster packing, sparkline, bar list
+**Status:** todo
+
+**Description:**
+- `charts/palette.ts`
+- `charts/raster.ts` (cell grid → base64 u32 triplets; copy the approach from agent-skills-mods `chart.ts`)
+- `charts/sparkline.ts`
+- `charts/bars.ts` (SPEC-charts §3 and §6), each returning `legend` and `alt`
+
+**Acceptance criteria:**
+- [ ] Decoded `cells` length is `columns*rows*3`, and every code point is printable and one column wide
+- [ ] Bars share one scale; kept tails are drawn grey; `alt` names the top three values with units
+- [ ] Palette colors pass ≥ 3:1 contrast on dark and light backgrounds
+
+**Verification:**
+- [ ] `node --test tests/charts/` and `npx -p typescript tsc -p .`
+
+**Dependencies:** T1
+
+**Files likely touched:** `charts/palette.ts`, `charts/raster.ts`, `charts/sparkline.ts`, `charts/bars.ts`, `tests/charts/base.test.ts`
+
+**Estimated scope:** M
+
+## Task 11: Charts: footprint stacked bar and treemap with hit boxes
+**Status:** todo
+
+**Description:** `charts/stacked.ts` (SPEC-charts §1, eighth-block precision, reclaimable underline row) and `charts/treemap.ts` (§2, squarified, labels, `+N more`, `hit` boxes).
+
+**Acceptance criteria:**
+- [ ] Stacked segments sum to the width ± 1 eighth-cell, and parts ≥ 1% are always visible
+- [ ] Treemap tile areas are proportional within 1 cell, and every id has a tile or is in `+N more`
+- [ ] Snapshot tests of decoded cells for fixed inputs
+
+**Verification:**
+- [ ] `node --test tests/charts/`
+
+**Dependencies:** T10
+
+**Files likely touched:** `charts/stacked.ts`, `charts/treemap.ts`, `tests/charts/stacked.test.ts`, `tests/charts/treemap.test.ts`
+
+**Estimated scope:** M
+
+## Task 12: Charts: age histogram, PNG pixels
+**Status:** todo
+
+**Description:**
+- `charts/histogram.ts`: age buckets stacked by risk.
+- `charts/png.ts`: copy `encodePng` and `zlib` from agent-skills-mods `pixels.ts`. Pixel variants of the treemap and stacked bar.
+
+**Acceptance criteria:**
+- [ ] `histogram` handles empty buckets and one non-empty bucket
+- [ ] PNG output passes the signature and IHDR check, and is ≤ 2 MiB at 120×30 cells
+- [ ] Each pixel chart has the same `legend` and `alt` as its cell twin
+
+**Verification:**
+- [ ] `node --test tests/charts/`
+
+**Dependencies:** T11
+
+**Files likely touched:** `charts/histogram.ts`, `charts/png.ts`, `tests/charts/histogram.test.ts`, `tests/charts/png.test.ts`
+
+**Estimated scope:** M
+
+## Task 13: Skills: `/sweep:scan`, `/sweep:clean`, `/sweep:explain`
+**Status:** todo
+
+**Description:** Rewrite the three SKILL.md files per SPEC-skills:
+- the new engine path
+- the dry run → AskUserQuestion → `--yes` rule
+- caution wording
+- a pointer to the `/sweep` pane
+
+Remove the old `skills/list` and `skills/clearx`.
+
+**Acceptance criteria:**
+- [ ] `claude -p --plugin-dir .` lists exactly the three skills
+- [ ] In a sandboxed session, declining the confirmation deletes nothing (a second scan shows the same items)
+- [ ] No skill text names `rm` or a git delete command
+
+**Verification:**
+- [ ] `claude plugin validate --strict .`
+- [ ] Manual: `/sweep:clean safe` with the sandbox env
+
+**Dependencies:** T8
+
+**Files likely touched:** `skills/scan/SKILL.md`, `skills/clean/SKILL.md`, `skills/explain/SKILL.md`
+
+**Estimated scope:** S
+
+## Checkpoint C: Everything except the UI
+- [ ] `sweep scan`, `sweep clean safe` (dry run) work in a terminal
+- [ ] `/sweep:clean safe` asks before deleting
+- [ ] Human reviews chart snapshots (cells) and one pixel PNG
+
+## Task 14: Pane Overview: cached and live scan, header, category table, layouts, text fallback
+**Status:** todo
+
+**Description:** Build on the T2 spike:
+- `engine-client.ts` with `$.process.spawn`, NDJSON progress and the schema check
+- state atoms per SPEC-pane
+- Overview with the header, warnings and the category table (risk, size, items, toggles), plus Rescan
+- wide and narrow layouts
+- the text fallback when the pane isn't placed (< 110 columns)
+
+**Acceptance criteria:**
+- [ ] With a scan already in this session's `$.state`, the first draw needs no engine call; with none, the progress view draws at once
+- [ ] No call to `$.store` or `$.fs.write` (spy test)
+- [ ] Progress state updates per category during a scan; a second request joins the running scan
+- [ ] Render tests at 200, 144 and 110 columns; below 110, `/sweep` answers with text
+
+**Verification:**
+- [ ] `claude plugin test .` and `npx -p typescript tsc -p .`
+- [ ] Manual: `/sweep`
+
+**Dependencies:** T2, T7
+
+**Files likely touched:** `hooks/engine-client.ts`, `hooks/pane/overview.tsx`, `hooks/pane/layout.ts`, `types/index.d.ts`, `hooks/pane.test.ts`
+
+**Estimated scope:** M
+
+## Task 15: Pane charts: footprint bar, treemap, bars; cells or pixels
+**Status:** todo
+
+**Description:** Place the stacked bar, treemap and category bars in Overview:
+- `Raster` for cells, `Image` for pixels, chosen by `chartStyle` (and Q2's terminal detection)
+- text equivalents on surfaces without `Raster`
+
+**Acceptance criteria:**
+- [ ] `chartStyle: cells` draws Rasters and `pixels` draws Images with the chart's `alt`
+- [ ] A non-terminal surface render draws the legend and alt as `Text` (test with `e.surface = 'desktop'`)
+- [ ] Charts resize with the viewport, never wider than the pane
+
+**Verification:**
+- [ ] `claude plugin test .`
+- [ ] Manual: Ghostty (pixels) and Terminal.app (cells)
+
+**Dependencies:** T11, T14
+
+**Files likely touched:** `hooks/pane/charts.tsx`, `hooks/pane/overview.tsx`, `.claude-plugin/plugin.json` (userConfig), `hooks/pane.test.ts`
+
+**Estimated scope:** S
+
+## Task 16: Pane clean flow: select, dry run, confirm, progress, done
+**Status:** todo
+
+**Description:** The state machine of SPEC-pane §Clean flow:
+- Select safe, toggles, Dry run, Clean…
+- the confirm step with caution lines and a separate `y` hotkey
+- the cleaning progress line
+- the done summary and auto-rescan
+- the locked (exit 3) and partial-failure (exit 1) states
+- review categories and kept items can't be selected
+
+**Acceptance criteria:**
+- [ ] A test per transition in the diagram, including cancel, locked and partial failure
+- [ ] No single key deletes: Clean's and Confirm's hotkeys differ, and Confirm exists only in `confirm`
+- [ ] The engine is called with `--via pane` and with the exact selection as `--only` when items were unticked
+
+**Verification:**
+- [ ] `claude plugin test .`
+
+**Dependencies:** T15
+
+**Files likely touched:** `hooks/pane/clean-flow.ts`, `hooks/pane/overview.tsx`, `hooks/engine-client.ts`, `hooks/clean-flow.test.ts`
+
+**Estimated scope:** M
+
+## Task 17: Category drill-down: texts, items, per-item selection, age histogram
+**Status:** todo
+
+**Description:** The drill-down view (SPEC-pane): the creates / claude / sweep texts as `Markdown`, the item list with reasons, per-item toggles feeding `selectedItems`, the age histogram, and Back.
+
+**Acceptance criteria:**
+- [ ] Kept items show their reason and can't be ticked
+- [ ] Unticking an item changes the Clean total and the `--only` list
+- [ ] The histogram matches the category's age buckets
+
+**Verification:**
+- [ ] `claude plugin test .`
+
+**Dependencies:** T12, T16
+
+**Files likely touched:** `hooks/pane/category.tsx`, `hooks/pane/overview.tsx`, `hooks/category.test.ts`
+
+**Estimated scope:** M
+
+## Task 18: Projects view
+**Status:** todo
+
+**Description:** The Projects tab: a bar list of the top 15 projects by reclaimable bytes, with `(gone)` marks. Pressing a row filters Overview to that project's items. Tabs `1`–`2` switch views.
+
+**Acceptance criteria:**
+- [ ] The project filter turns into `--only` with that project's items
+- [ ] Renders 0, 1 and 15+ projects
+- [ ] Tabs switch views and keep the selection
+
+**Verification:**
+- [ ] `claude plugin test .`
+
+**Dependencies:** T11, T14
+
+**Files likely touched:** `hooks/pane/projects.tsx`, `hooks/views.test.ts`
+
+**Estimated scope:** S
+
+## Task 19: `/sweep` arguments: scan, clean, explain, text
+**Status:** todo
+
+**Description:** Route `/sweep scan | clean <ids> | explain <id> | text …` per SPEC-pane §Entry points, with the one-line command outputs.
+
+**Acceptance criteria:**
+- [ ] Each argument form opens the right view and state (`clean` lands on confirm with those categories ticked)
+- [ ] An unknown category answers with the list of ids
+- [ ] `text` answers with the CLI text and opens no pane
+
+**Verification:**
+- [ ] `claude plugin test .`
+
+**Dependencies:** T16, T17
+
+**Files likely touched:** `hooks/register.tsx`, `hooks/pane/command.ts`, `hooks/command.test.ts`
+
+**Estimated scope:** S
+
+## Checkpoint D: Pane
+- [ ] Manual checklist from SPEC-pane: Ghostty and Terminal.app, 110 / 144 / 200 columns, mouse and keys
+- [ ] With your go-ahead: clean the idle Tree-Testing worktrees from the pane (SPEC.md success criterion 3)
+- [ ] Human review
+
+## Task 20: Status line entry and background scan, once per session
+**Status:** todo
+
+**Description:**
+- The background scan on `session.start`: once per session, a 60 s delay, read-only argv, a 5 min timeout, joining a running pane scan, the result in `$.state` shared with the pane.
+- `$.ui.status` text per SPEC-alerts §2.
+- The `backgroundScan` and `statusLine` settings.
+
+**Acceptance criteria:**
+- [ ] On: exactly one spawn per session, 60 s after start. Off: none
+- [ ] Every spawn's argv contains `scan` and never `clean` (test asserts it)
+- [ ] Status text cases: none yet, normal, warning `⚠`, < 100 MB hidden, setting off hidden; no `$.store` use
+
+**Verification:**
+- [ ] `claude plugin test .`
+
+**Dependencies:** T2, T4
+
+**Files likely touched:** `hooks/alerts/background.ts`, `hooks/alerts/status.ts`, `hooks/register.tsx`, `hooks/alerts.test.ts`
+
+**Estimated scope:** M
+
+## Task 21: Band above the prompt: conditions, hide, return
+**Status:** todo
+
+**Description:** An `AbovePrompt` render per SPEC-alerts §3:
+- the five conditions, most severe first
+- Open and Hide (for the rest of the session, in `$.state`)
+- return when a more severe condition appears
+- silence during `hasSurvey`
+- the `bandThresholdGB` setting (type per Q1)
+
+**Acceptance criteria:**
+- [ ] One test per condition, plus a precedence test
+- [ ] Hide holds for the session, and the band returns only for a more severe condition
+- [ ] The band draws nothing while `hasSurvey` is set
+
+**Verification:**
+- [ ] `claude plugin test .`
+
+**Dependencies:** T20
+
+**Files likely touched:** `hooks/alerts/band.tsx`, `hooks/register.tsx`, `.claude-plugin/plugin.json`, `hooks/band.test.ts`
+
+**Estimated scope:** M
+
+## Task 22: Toasts: clean finished (pane and skill), runaway output
+**Status:** todo
+
+**Description:** Toasts per SPEC-alerts §4:
+- a pane clean toasts its own result
+- a skill clean is caught by a `tool.call` hook on `Bash` whose command runs the engine with `clean --yes --json`: after `next(e)`, parse the clean JSON and toast `freedBytes`
+- runaway output toasts once per path per session
+
+**Acceptance criteria:**
+- [ ] A Bash call running `engine/sweep.mjs clean safe --yes --json` produces exactly one toast with the freed size; other Bash calls produce none
+- [ ] A runaway-output path toasts once per session
+
+**Verification:**
+- [ ] `claude plugin test .`
+
+**Dependencies:** T16, T20
+
+**Files likely touched:** `hooks/alerts/toasts.ts`, `hooks/register.tsx`, `hooks/toasts.test.ts`
+
+**Estimated scope:** S
+
+## Task 23: README, clearx retirement, full verification
+**Status:** todo
+
+**Description:**
+- README: install, `/sweep`, skills, CLI, categories, safety, settings, prevention tips, uninstalling clearx (Q4).
+- Delete `clearx/` once its behavior is covered by sweep's tests.
+- Run every SPEC.md success criterion and record the evidence.
+
+**Acceptance criteria:**
+- [ ] Each of the 9 SPEC.md success criteria has recorded evidence (output, timing or screenshot note)
+- [ ] `clearx/` removed, with no reference to it left except the README's uninstall note
+- [ ] Clean install from the local marketplace works in a fresh session
+
+**Verification:**
+- [ ] `node --test tests/`, `claude plugin test .`, `claude plugin validate --strict .`, `npx -p typescript tsc -p .`
+- [ ] `claude plugin marketplace add ~/Projects/clear && claude plugin install sweep@sweep`, then `/sweep`
+
+**Dependencies:** T13, T19, T22
+
+**Files likely touched:** `README.md`, `clearx/` (deleted)
+
+**Estimated scope:** S
+
+## Checkpoint: Complete
+- [ ] All SPEC.md success criteria met with evidence
+- [ ] Human review and approval
