@@ -13,6 +13,8 @@ export type Engine = {
   clean?: unknown | ((argv: readonly string[]) => unknown)
   /** The exit code of a clean (a scan exits with `exitCode`). */
   cleanExit?: number
+  /** What a Bash tool call answers, by its command. */
+  bash?: (command: string) => unknown
   exitCode?: number
   /** NDJSON progress lines the scan writes to stderr. */
   progress?: unknown[]
@@ -80,6 +82,8 @@ export function world(on: On, engine: Engine = {}, env: Record<string, string> =
     seen.stored.push(String((e as { key?: string }).key))
     return { value: undefined } as never
   })
+  // Stands for the tools themselves: what a plugin's next(e) at tool.call gets.
+  on('tool.call', (_$, e) => ({ result: engine.bash?.(String((e as { command?: unknown }).command ?? '')) ?? 'ok' }) as never)
   // Stands for the engine's own band: what a hook's next(e) draws.
   on('ui.render', { component: 'AbovePrompt' }, ($x, e) => $x.ui.resolve(e).Text({ children: '' }))
   on('session.start', (_$, e) => ({ cwd: e.cwd }) as never)

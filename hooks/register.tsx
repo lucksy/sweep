@@ -13,6 +13,7 @@ import { Projects, Tabs } from './pane/projects'
 import { parseSweep } from './pane/command'
 import { BACKGROUND_DELAY_MS, statusText } from './alerts/status'
 import { bandFor } from './alerts/band'
+import { cleanFromToolResult, cleanToast, isEngineClean, runawayToasts } from './alerts/toasts'
 import { Category } from './pane/category'
 import { CleanBar } from './pane/clean'
 import { Overview } from './pane/overview'
@@ -48,6 +49,8 @@ let terminal: TerminalEnv = {}
 let statusLineOn = true
 // The session's one background scan, so a second session.start does not schedule another.
 let backgroundScheduled = false
+// Runaway files already toasted this session.
+const toasted = new Set<string>()
 
 function rescan($: EngineInterface): Promise<void> {
   inflight ??= runScan($).finally(() => { inflight = null })
@@ -90,6 +93,7 @@ async function runScan($: EngineInterface) {
     await update($, scannedAt, () => now)
     await update($, status, () => 'idle')
     $.ui.status(statusText(result, statusLineOn))
+    for (const text of runawayToasts(result, toasted)) $.ui.toast(text)
   } catch (error) {
     await update($, failure, () => (error instanceof Error ? error.message : String(error)))
     await update($, status, () => 'error')
@@ -131,6 +135,7 @@ async function confirmClean($: EngineInterface) {
     const result = parseClean(run.stdout)
     await update($, outcome, () => result)
     await update($, freed, (n) => n + result.freedBytes)
+    $.ui.toast(cleanToast(result.freedBytes, result.failed.length))
     await update($, selected, () => [])
     await update($, selectedItems, () => ({}))
     await update($, projectFilter, () => null)
@@ -221,6 +226,20 @@ export const register: Register = (on, options) => {
     }
     return { text: opened.text }
   })
+
+  // A clean the /sweep:clean skill ran through Bash: toast what it freed.
+  // The handler replays the settled result, so a failure here never touches the call.
+  on('tool.call', { tool: 'Bash' }, async ($, e, next) => {
+    const ran = await next(e)
+    if (isEngineClean(String((e as { command?: unknown }).command ?? ''))) {
+      const clean = cleanFromToolResult(ran)
+      if (clean) {
+        await update($, freed, (n) => n + clean.freed)
+        $.ui.toast(cleanToast(clean.freed, clean.failed))
+      }
+    }
+    return ran
+  }).catch(($, e, next) => next(e))
 
   // One line above the prompt for the most severe condition; Hide lasts the session.
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {

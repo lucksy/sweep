@@ -525,7 +525,7 @@ Remove the old `skills/list` and `skills/clearx`.
 **Notes:** Severity order: runaway output, low disk, cleanup paused, reclaimable over the threshold, many worktrees (SPEC-alerts lists the threshold first in its table but asks for the most severe). Open is o, Hide is h. bandThresholdGB is a number setting (Q1).
 
 ## Task 22: Toasts: clean finished (pane and skill), runaway output
-**Status:** todo
+**Status:** done · started 2026-10-13 · done 2026-10-13
 
 **Description:** Toasts per SPEC-alerts §4:
 - a pane clean toasts its own result
@@ -533,17 +533,19 @@ Remove the old `skills/list` and `skills/clearx`.
 - runaway output toasts once per path per session
 
 **Acceptance criteria:**
-- [ ] A Bash call running `engine/sweep.mjs clean safe --yes --json` produces exactly one toast with the freed size; other Bash calls produce none
-- [ ] A runaway-output path toasts once per session
+- [x] A Bash call running `engine/sweep.mjs clean safe --yes --json` produces exactly one toast with the freed size; other Bash calls produce none
+- [x] A runaway-output path toasts once per session
 
 **Verification:**
-- [ ] `claude plugin test .`
+- [x] `claude plugin test .`
 
 **Dependencies:** T16, T20
 
 **Files likely touched:** `hooks/alerts/toasts.ts`, `hooks/register.tsx`, `hooks/toasts.test.ts`
 
 **Estimated scope:** S
+
+**Notes:** The Bash hook on tool.call only reads the result after next(e) and has a .catch that replays the settled result, so it can never deny, change or re-run a tool call. A skill clean also adds to 'freed this session'.
 
 ## Task 23: README, clearx retirement, full verification
 **Status:** todo
