@@ -226,7 +226,7 @@ Measure on this machine: baseline 28–43 s, target ≤ 15 s.
 Removed 2026-10-13: sweep stores no data (SPEC-history.md). Kept as a number only, so task ids stay stable; nothing to build.
 
 ## Task 10: Charts base: palette, Raster packing, sparkline, bar list
-**Status:** todo
+**Status:** done · started 2026-10-13 · done 2026-10-13
 
 **Description:**
 - `charts/palette.ts`
@@ -235,18 +235,20 @@ Removed 2026-10-13: sweep stores no data (SPEC-history.md). Kept as a number onl
 - `charts/bars.ts` (SPEC-charts §3 and §6), each returning `legend` and `alt`
 
 **Acceptance criteria:**
-- [ ] Decoded `cells` length is `columns*rows*3`, and every code point is printable and one column wide
-- [ ] Bars share one scale; kept tails are drawn grey; `alt` names the top three values with units
-- [ ] Palette colors pass ≥ 3:1 contrast on dark and light backgrounds
+- [x] Decoded `cells` length is `columns*rows*3`, and every code point is printable and one column wide
+- [x] Bars share one scale; kept tails are drawn grey; `alt` names the top three values with units
+- [x] Palette colors pass ≥ 3:1 contrast on dark and light backgrounds
 
 **Verification:**
-- [ ] `claude plugin test .` and `npx -p typescript tsc -p .`
+- [x] `claude plugin test .` and `npx -p typescript tsc -p .`
 
 **Dependencies:** T1
 
 **Files likely touched:** `charts/palette.ts`, `charts/raster.ts`, `charts/sparkline.ts`, `charts/bars.ts`, `tests/charts/base.test.ts`
 
 **Estimated scope:** M
+
+**Notes:** No sparkline (removed with history). Palette changed from SPEC-charts' suggestion: amber #fab219 fails 3:1 on white, so caution is #c47f00 and every chart color is chosen to pass on both backgrounds (tested). Text a chart draws is sanitized to one-column characters so a project name can never get a Raster refused.
 
 ## Task 11: Charts: footprint stacked bar and treemap with hit boxes
 **Status:** todo
