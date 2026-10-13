@@ -39,7 +39,7 @@ Then turn the clearx sandbox script into `tests/fixtures/sandbox.mjs`, with the 
 **Notes:** Built in `~/Projects/clear` (no rename). `sweep scan` and `clearx list` category rows are identical on this machine (2026-10-13). `node --test tests/` needs a glob on Node 22, so docs now say `node --test "tests/**/*.test.mjs"`.
 
 ## Task 2: Mod spike: `/sweep` shows the engine's total in a pane
-**Status:** done · started 2026-10-13 · done 2026-10-13
+**Status:** in progress · started 2026-10-13
 
 **Description:** The thinnest vertical slice through the riskiest part:
 - a mod that registers `/sweep`
@@ -295,7 +295,7 @@ Removed 2026-10-13: sweep stores no data (SPEC-history.md). Kept as a number onl
 **Notes:** No trend chart (removed with history). The pixel treemap carries no words in the picture, so its legend names every tile with its size in the tile's color (the cell twin's legend is passed in by the caller); alt and hit boxes are the twin's. charts/png.ts is copied from agent-skills-mods (MIT, the author's own).
 
 ## Task 13: Skills: `/sweep:scan`, `/sweep:clean`, `/sweep:explain`
-**Status:** done · started 2026-10-13 · done 2026-10-13
+**Status:** in progress · started 2026-10-13 · step commit
 
 **Description:** Rewrite the three SKILL.md files per SPEC-skills:
 - the new engine path
@@ -307,12 +307,12 @@ Remove the old `skills/list` and `skills/clearx`.
 
 **Acceptance criteria:**
 - [x] `claude -p --plugin-dir .` lists exactly the three skills
-- [ ] In a sandboxed session, declining the confirmation deletes nothing (a second scan shows the same items) (manual, Checkpoint C)
+- [x] In a sandboxed session, declining the confirmation deletes nothing (a second scan shows the same items)
 - [x] No skill text names `rm` or a git delete command
 
 **Verification:**
 - [x] `claude plugin validate --strict .`
-- [ ] Manual: `/sweep:clean safe` with the sandbox env (Checkpoint C)
+- [x] Manual: `/sweep:clean safe` with the sandbox env
 
 **Dependencies:** T8
 
@@ -322,13 +322,15 @@ Remove the old `skills/list` and `skills/clearx`.
 
 **Notes:** The 'declining deletes nothing' check needs an interactive session to answer AskUserQuestion; it is covered structurally (tests/engine/skills.test.mjs: dry run before the question, --yes only after) and left as a manual check for Checkpoint C. The old list/clearx skills were already replaced in T1.
 
+**Checked 2026-10-13:** `claude -p "/sweep:clean safe" --plugin-dir .` against a sandbox (SWEEP_HOME/SWEEP_CLAUDE_DIR/SWEEP_TMPDIR; the env was first proven to reach Claude's Bash). Turn 1 ran only the dry run (headless, so no question was shown) and stopped. Turn 2, resumed with "No, don't delete anything.", made no tool calls. All 167 sandbox paths were unchanged after both.
+
 ## Checkpoint C: Everything except the UI
 - [ ] `sweep scan`, `sweep clean safe` (dry run) work in a terminal
 - [ ] `/sweep:clean safe` asks before deleting
 - [ ] Human reviews chart snapshots (cells) and one pixel PNG
 
 ## Task 14: Pane Overview: cached and live scan, header, category table, layouts, text fallback
-**Status:** done · started 2026-10-13 · done 2026-10-13
+**Status:** in progress · started 2026-10-13
 
 **Description:** Build on the T2 spike:
 - `engine-client.ts` with `$.process.spawn`, NDJSON progress and the schema check
@@ -356,7 +358,7 @@ Remove the old `skills/list` and `skills/clearx`.
 **Notes:** Views are pure functions in hooks/pane/ that receive the surface's elements, the data and callbacks; register.tsx makes every $ call. The scan streams through $.process.spawn with NDJSON progress; a second request joins the one in flight; a scan in this session younger than 10 minutes is reused. The manual /sweep check moves to Checkpoint D.
 
 ## Task 15: Pane charts: footprint bar, treemap, bars; cells or pixels
-**Status:** done · started 2026-10-13 · done 2026-10-13
+**Status:** in progress · started 2026-10-13
 
 **Description:** Place the stacked bar, treemap and category bars in Overview:
 - `Raster` for cells, `Image` for pixels, chosen by `chartStyle` (and Q2's terminal detection)
@@ -548,7 +550,7 @@ Remove the old `skills/list` and `skills/clearx`.
 **Notes:** The Bash hook on tool.call only reads the result after next(e) and has a .catch that replays the settled result, so it can never deny, change or re-run a tool call. A skill clean also adds to 'freed this session'.
 
 ## Task 23: README, clearx retirement, full verification
-**Status:** done · started 2026-10-13 · done 2026-10-13
+**Status:** in progress · started 2026-10-13
 
 **Description:**
 - README: install, `/sweep`, skills, CLI, categories, safety, settings, prevention tips, uninstalling clearx (Q4).

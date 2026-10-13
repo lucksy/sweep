@@ -26,9 +26,11 @@ function du(args) {
 }
 
 export function createContext({ env = process.env, days = null, force = false } = {}) {
-  const home = env.HOME || os.homedir();
-  const claudeDir = env.CLAUDE_CONFIG_DIR || path.join(home, '.claude');
-  const tmpBase = env.CLAUDE_CODE_TMPDIR || (process.platform === 'darwin' ? '/private/tmp' : '/tmp');
+  // SWEEP_* point the engine alone at another tree (a sandbox) without moving
+  // Claude Code's own home, config or login.
+  const home = env.SWEEP_HOME || env.HOME || os.homedir();
+  const claudeDir = env.SWEEP_CLAUDE_DIR || env.CLAUDE_CONFIG_DIR || path.join(home, '.claude');
+  const tmpBase = env.SWEEP_TMPDIR || env.CLAUDE_CODE_TMPDIR || (process.platform === 'darwin' ? '/private/tmp' : '/tmp');
   const tmpRoot = path.join(tmpBase, `claude-${process.getuid ? process.getuid() : 0}`);
   const cliVersions = path.join(home, '.local', 'share', 'claude', 'versions');
   const guard = createGuard({ home, claudeDir, tmpBase, tmpRoot, cliVersions });
