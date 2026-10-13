@@ -272,25 +272,27 @@ Removed 2026-10-13: sweep stores no data (SPEC-history.md). Kept as a number onl
 **Notes:** Treemap tiles are colored backgrounds (neighbours of one color alternate a shade darker) rather than box-drawing borders; text on a tile is black or white, whichever contrasts more. The legend is passed in by the caller (it knows what the colors mean).
 
 ## Task 12: Charts: age histogram, PNG pixels
-**Status:** todo
+**Status:** done · started 2026-10-13 · done 2026-10-13
 
 **Description:**
 - `charts/histogram.ts`: age buckets stacked by risk.
 - `charts/png.ts`: copy `encodePng` and `zlib` from agent-skills-mods `pixels.ts`. Pixel variants of the treemap and stacked bar.
 
 **Acceptance criteria:**
-- [ ] `histogram` handles empty buckets and one non-empty bucket
-- [ ] PNG output passes the signature and IHDR check, and is ≤ 2 MiB at 120×30 cells
-- [ ] Each pixel chart has the same `legend` and `alt` as its cell twin
+- [x] `histogram` handles empty buckets and one non-empty bucket
+- [x] PNG output passes the signature and IHDR check, and is ≤ 2 MiB at 120×30 cells
+- [x] Each pixel chart has the same `legend` and `alt` as its cell twin
 
 **Verification:**
-- [ ] `claude plugin test .`
+- [x] `claude plugin test .`
 
 **Dependencies:** T11
 
 **Files likely touched:** `charts/histogram.ts`, `charts/png.ts`, `tests/charts/histogram.test.ts`, `tests/charts/png.test.ts`
 
 **Estimated scope:** M
+
+**Notes:** No trend chart (removed with history). The pixel treemap carries no words in the picture, so its legend names every tile with its size in the tile's color (the cell twin's legend is passed in by the caller); alt and hit boxes are the twin's. charts/png.ts is copied from agent-skills-mods (MIT, the author's own).
 
 ## Task 13: Skills: `/sweep:scan`, `/sweep:clean`, `/sweep:explain`
 **Status:** todo

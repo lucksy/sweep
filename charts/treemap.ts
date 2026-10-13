@@ -10,7 +10,7 @@ export type Node = { id: string; label: string; value: number; color: number }
 type Rect = { x: number; y: number; w: number; h: number }
 type Placed = Node & Rect
 
-const MORE = '+more'
+export const MORE = '+more'
 
 // Bruls, Huizing & van Wijk: lay rows along the shorter side, keeping tiles near square.
 function squarify(nodes: Node[], rect: Rect): Placed[] {
@@ -59,7 +59,7 @@ const toCells = (p: Placed) => {
 }
 
 // Every tile at least 2 columns × 1 row; the smallest go into one "+N more" tile until that holds.
-function layout(nodes: Node[], columns: number, rows: number) {
+export function layout(nodes: Node[], columns: number, rows: number) {
   const sorted = [...nodes].filter((n) => n.value > 0).sort((a, b) => b.value - a.value)
   for (let keep = sorted.length; keep >= 0; keep--) {
     const rest = sorted.slice(keep)
@@ -70,7 +70,7 @@ function layout(nodes: Node[], columns: number, rows: number) {
   return { tiles: [], merged: sorted }
 }
 
-const shade = (c: number, f: number) => [16, 8, 0].reduce((out, s) => out | (Math.round(((c >> s) & 0xff) * f) << s), 0)
+export const shade = (c: number, f: number) => [16, 8, 0].reduce((out, s) => out | (Math.round(((c >> s) & 0xff) * f) << s), 0)
 
 /** `legend` says what the colors mean (the caller knows: risk levels, parts). */
 export function treemap(nodes: Node[], columns: number, rows: number, legend: LegendPart[] = []): CellChart & { merged: string[] } {
