@@ -1,0 +1,10 @@
+
+sweep clean (dry run: nothing is deleted; add --yes to delete)
+
+  worktrees: 2 item(s), 2.6G
+    would remove   1.4G  /Users/x/Projects/Tree-Testing /.claude/worktrees/agent-a7224a15e5bfcd682
+    would remove   1.2G  /Users/x/Projects/Tree-Testing /.claude/worktrees/agent-a5c603ec4d9b462bf
+    kept: 1 created during a session still running in this repo (--force)
+  tmp-sessions: nothing to clean
+
+  Would free 2.6G. Run again with --yes to delete.

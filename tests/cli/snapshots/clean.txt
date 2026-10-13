@@ -1,0 +1,9 @@
+
+sweep clean
+
+  worktrees: 2 item(s), 2.6G
+    removed   1.4G  /Users/x/Projects/Tree-Testing /.claude/worktrees/agent-a7224a15e5bfcd682
+    removed   1.2G  /Users/x/Projects/Tree-Testing /.claude/worktrees/agent-a5c603ec4d9b462bf
+    kept: 1 created during a session still running in this repo (--force)
+
+  Freed 2.6G

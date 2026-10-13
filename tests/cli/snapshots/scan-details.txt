@@ -1,0 +1,34 @@
+
+sweep: storage Claude Code leaves behind
+Claude Code uses 9.0G on this disk · 3.0G reclaimable · 57G free (6%)
+⚠ a task output file is 6.0G: /private/tmp/claude-501/-p/s/tasks/b1.output
+
+██████████████████████████████▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒░░░░░░░░░░░░░░░░░░░░░░░█▓▓▓▓▒▒▒▒▒▒▒▒
+█ Agent worktrees 2.8G  ▓ Temp sessions 1.6G  ▒ Transcripts 1.4G  ░ Plugins 2.1G
+█ Checkpoints 51M  ▓ Other ~/.claude 358M  ▒ CLI versions 717M
+
+  ID                   RISK     RECLAIM    ITEMS  WHAT
+  worktrees            caution     2.6G      2/3  Agent and workflow worktrees
+        ✓   1.4G  /Users/x/Projects/Tree-Testing /.claude/worktrees/agent-a7224a15e5bfcd682
+                  worktree-agent-a7224a15e5bfcd682 · clean, nothing unsaved · node_modules 1.0G · 2…
+        ✓   1.2G  /Users/x/Projects/Tree-Testing /.claude/worktrees/agent-a5c603ec4d9b462bf
+                  worktree-agent-a5c603ec4d9b462bf · clean, nothing unsaved · 23d old
+        ·    20M  /Users/x/Projects/agent-skills-mods/.claude/worktrees/agent-a55e24e33f5d4b3f0
+                  made during a session still running in this repo · 1d old
+        kept: 1 created during a session still running in this repo (--force)
+  tmp-sessions         safe        400M      1/1  Temp session folders (scratchpads, task output, i…
+        ✓   400M  /private/tmp/claude-501/-Users-x-Projects…qlk/29358831-bb1a-49ce-9902-62c332f74fee
+                  session · 2d old
+  marketplace-deps     review        0B      0/1  node_modules inside marketplace clones
+        ·   1.1G  /Users/x/.claude/plugins/marketplaces/thedotmack/node_modules
+                  thedotmack/node_modules
+        kept: 1 needs review (--force)
+
+  Reclaimable: 3.0G total, 400M in safe categories.
+  ITEMS = cleanable/found; ✓ = would be removed.
+
+  Not cleaned by sweep
+
+  cleanupPeriodDays    30 (default)  Age at which Claude sweeps transcripts.
+
+  Next: sweep explain <id> · sweep clean safe · sweep clean <id> --yes

@@ -1,0 +1,22 @@
+
+sweep: storage Claude Code leaves behind
+Claude Code uses 9.0G on this disk · 3.0G reclaimable · 57G free (6%)
+⚠ a task output file is 6.0G: /private/tmp/claude-501/-p/s/tasks/b1.output
+
+██████████████████████████████▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒░░░░░░░░░░░░░░░░░░░░░░░█▓▓▓▓▒▒▒▒▒▒▒▒
+█ Agent worktrees 2.8G  ▓ Temp sessions 1.6G  ▒ Transcripts 1.4G  ░ Plugins 2.1G
+█ Checkpoints 51M  ▓ Other ~/.claude 358M  ▒ CLI versions 717M
+
+  ID                   RISK     RECLAIM    ITEMS  WHAT
+  worktrees            caution     2.6G      2/3  Agent and workflow worktrees
+  tmp-sessions         safe        400M      1/1  Temp session folders (scratchpads, task output, i…
+  marketplace-deps     review        0B      0/1  node_modules inside marketplace clones
+
+  Reclaimable: 3.0G total, 400M in safe categories.
+  ITEMS = cleanable/found; ✓ = would be removed.
+
+  Not cleaned by sweep
+
+  cleanupPeriodDays    30 (default)  Age at which Claude sweeps transcripts.
+
+  Next: sweep explain <id> · sweep clean safe · sweep clean <id> --yes

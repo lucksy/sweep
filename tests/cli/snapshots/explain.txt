@@ -1,0 +1,22 @@
+
+Agent and workflow worktrees  (worktrees, caution)
+
+Where it comes from
+  Subagents create checkouts.
+
+What Claude Code cleans itself
+  Removed when unchanged.
+
+What sweep removes
+  Removes clean ones.
+
+Found: 3 item(s), 2 cleanable, 2.6G reclaimable
+
+  ✓   1.4G  /Users/x/Projects/Tree-Testing /.claude/worktrees/agent-a7224a15e5bfcd682
+           worktree-agent-a7224a15e5bfcd682 · clean, nothing unsaved · node_modules 1.0G · 23d old
+  ✓   1.2G  /Users/x/Projects/Tree-Testing /.claude/worktrees/agent-a5c603ec4d9b462bf
+           worktree-agent-a5c603ec4d9b462bf · clean, nothing unsaved · 23d old
+  ·    20M  /Users/x/Projects/agent-skills-mods/.claude/worktrees/agent-a55e24e33f5d4b3f0
+           kept: created during a session still running in this repo (--force) · made during a ses…
+
+Kept: 1 created during a session still running in this repo (--force)

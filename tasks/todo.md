@@ -194,7 +194,7 @@ Measure on this machine: baseline 28–43 s, target ≤ 15 s.
 - [ ] Human review of the contract before the UI is built on it
 
 ## Task 8: CLI text report, exit codes, aliases
-**Status:** todo
+**Status:** done · started 2026-10-13 · done 2026-10-13
 
 **Description:** `engine/text.mjs` and argument handling per SPEC-cli:
 - the header (footprint, reclaimable, disk free)
@@ -205,18 +205,20 @@ Measure on this machine: baseline 28–43 s, target ≤ 15 s.
 - every alias and exit code
 
 **Acceptance criteria:**
-- [ ] Snapshot tests of `scan`, `scan --details`, `explain`, `clean` (dry run) and `clean --yes` with `NO_COLOR=1` at 100 columns
-- [ ] Every exit code (0–3) produced by a test
-- [ ] `--json` output equals the engine result, with nothing else on stdout
+- [x] Snapshot tests of `scan`, `scan --details`, `explain`, `clean` (dry run) and `clean --yes` with `NO_COLOR=1` at 100 columns
+- [x] Every exit code (0–3) produced by a test
+- [x] `--json` output equals the engine result, with nothing else on stdout
 
 **Verification:**
-- [ ] `node --test "tests/cli/*.test.mjs"`
+- [x] `node --test "tests/cli/*.test.mjs"`
 
 **Dependencies:** T5, T7
 
 **Files likely touched:** `engine/text.mjs`, `engine/sweep.mjs`, `tests/cli/text.test.mjs`, `tests/cli/exit.test.mjs`
 
 **Estimated scope:** M
+
+**Notes:** Rendering lives in engine/text.mjs as pure functions with snapshot tests (tests/cli/snapshots); exit code 3 is 'unsupported platform' (engine/platform.mjs), tested as a unit since this machine is macOS. Snapshots were reviewed by eye.
 
 ## Task 9: History (removed)
 **Status:** blocked
