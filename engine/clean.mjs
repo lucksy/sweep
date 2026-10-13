@@ -14,7 +14,7 @@ export async function clean(ctx, { categories, only = null, dryRun = true, onPro
   const fresh = await scan(ctx, { ids: categories, lean: true, onProgress });
   const wanted = only ? new Set(only) : null;
   const out = {
-    schema: SCHEMA, dryRun, startedAt: new Date(started).toISOString(), durationMs: 0,
+    schema: SCHEMA, dryRun, mode: ctx.trash ? 'trash' : 'delete', startedAt: new Date(started).toISOString(), durationMs: 0,
     requested: { categories, only, force: !!ctx.force },
     freedBytes: 0, removed: [], kept: [], skipped: [], failed: [],
   };

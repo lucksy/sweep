@@ -38,7 +38,7 @@ test('isEngineClean and cleanFromToolResult', () => {
   expect(isEngineClean(SKILL)).toBe(true)
   expect(isEngineClean(SKILL.replace(' --yes', ''))).toBe(false)
   expect(isEngineClean('node engine/sweep.mjs scan --json --yes')).toBe(false)
-  expect(cleanFromToolResult({ result: JSON.stringify(done) })).toEqual({ freed: 2.7 * G, failed: 0 })
+  expect(cleanFromToolResult({ result: JSON.stringify(done) })).toEqual({ freed: 2.7 * G, failed: 0, trash: false })
   expect(cleanFromToolResult({ result: JSON.stringify(CLEAN) })).toBe(null)
   expect(cleanFromToolResult('Error: boom')).toBe(null)
 })
@@ -57,4 +57,9 @@ test('the background scan toasts a runaway file it finds', async ($, on) => {
   await seen.clock.advance(61_000)
   await seen.clock.settle()
   expect(seen.toasts).toEqual(['sweep: a task output file reached 6.0G — /sweep'])
+})
+
+test('a skill clean that moved to the Trash says so', () => {
+  expect(cleanFromToolResult({ result: JSON.stringify({ ...done, mode: 'trash' }) })?.trash).toBe(true)
+  expect(cleanFromToolResult({ result: JSON.stringify({ ...done, mode: 'delete' }) })?.trash).toBe(false)
 })

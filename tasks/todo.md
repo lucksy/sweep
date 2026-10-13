@@ -600,23 +600,25 @@ Remove the old `skills/list` and `skills/clearx`.
 **Notes:** Real machine: full scan 7.9–8.2 s with the search; 0 forgotten worktrees (every repo with Claude worktrees is known). Bug found and fixed on the way: on macOS's case-insensitive disk ~/Projects and ~/projects are one folder, so roots are resolved to their real spelling and deduplicated, and a repo is 'forgotten' only when none of its folders is known to Claude.
 
 ## Task 25: Move to Trash instead of deleting (#8)
-**Status:** todo
+**Status:** done · started 2026-10-13 · done 2026-10-13
 
 **Description:** SPEC-engine and SPEC-pane §Additions: `clean --trash` in the engine (macOS `trash`, Linux `gio trash`, guard first, worktree record pruned); `mode` in the clean result; Move to Trash (`t`) on the pane's confirm step; the skill asks Delete / Trash / Cancel.
 
 **Acceptance criteria:**
-- [ ] In the sandbox, `clean all --trash --yes` leaves the same survivors as a delete, and every removed path is gone from its place
-- [ ] An item the Trash refuses lands in `failed` and stays in place
-- [ ] Pane: the `t` button runs `--trash`, and the done line says the space returns when the Trash is emptied
+- [x] In the sandbox, `clean all --trash --yes` leaves the same survivors as a delete, and every removed path is gone from its place
+- [x] An item the Trash refuses lands in `failed` and stays in place
+- [x] Pane: the `t` button runs `--trash`, and the done line says the space returns when the Trash is emptied
 
 **Verification:**
-- [ ] `node --test "tests/**/*.test.mjs"`, `claude plugin test .`
+- [x] `node --test "tests/**/*.test.mjs"`, `claude plugin test .`
 
 **Dependencies:** T7, T16
 
 **Files likely touched:** `engine/trash.mjs`, `engine/clean.mjs`, `engine/categories/worktrees.mjs`, `engine/sweep.mjs`, `hooks/pane/clean.tsx`, `hooks/register.tsx`, `skills/clean/SKILL.md`
 
 **Estimated scope:** M
+
+**Notes:** Checked for real: /usr/bin/trash moved a scratch probe file (sweep-trash-probe.txt, now in your Trash). macOS hides ~/.Trash from the terminal (Operation not permitted), so the ~/.Trash fallback for macOS before 15 may be refused; such items land in failed and stay in place. Tests use SWEEP_TRASH_DIR so nothing reaches your real Trash. Bug found on the way: git keeps a trashed worktree's branch checked out until 'git worktree prune', so prune runs before the branch is deleted.
 
 ## Task 26: Item actions: reveal and copy path (#12)
 **Status:** todo

@@ -126,20 +126,20 @@ async function startClean($: EngineInterface) {
 }
 
 // Clean step 2: delete exactly the items the dry run showed (`--only` their ids).
-async function confirmClean($: EngineInterface) {
+async function confirmClean($: EngineInterface, { trash = false } = {}) {
   const shown = await read($, dry)
   if (!shown || (await read($, flow)) !== 'confirm' || !shown.removed.length) return
   await update($, flow, () => 'cleaning')
   await update($, cleaning, () => ({ removed: 0, freed: 0 }))
   try {
-    const argv = cleanArgv($.plugin.root, shown.requested.categories, { yes: true, only: shown.removed.map((r) => r.id) })
+    const argv = cleanArgv($.plugin.root, shown.requested.categories, { yes: true, trash, only: shown.removed.map((r) => r.id) })
     const run = await runEngine($, argv, async (event) => {
       if (event.event === 'removed') await update($, cleaning, (c) => ({ removed: (c?.removed ?? 0) + 1, freed: (c?.freed ?? 0) + Number(event.bytes ?? 0) }))
     })
     const result = parseClean(run.stdout)
     await update($, outcome, () => result)
     await update($, freed, (n) => n + result.freedBytes)
-    $.ui.toast(cleanToast(result.freedBytes, result.failed.length))
+    $.ui.toast(cleanToast(result.freedBytes, result.failed.length, result.mode === 'trash'))
     await update($, selected, () => [])
     await update($, selectedItems, () => ({}))
     await update($, projectFilter, () => null)
@@ -240,7 +240,7 @@ export const register: Register = (on, options) => {
       const clean = cleanFromToolResult(ran)
       if (clean) {
         await update($, freed, (n) => n + clean.freed)
-        $.ui.toast(cleanToast(clean.freed, clean.failed))
+        $.ui.toast(cleanToast(clean.freed, clean.failed, clean.trash))
       }
     }
     return ran
@@ -299,6 +299,7 @@ export const register: Register = (on, options) => {
       selectSafe: () => void (result && Promise.all([update($, selected, () => safeIds(result)), update($, selectedItems, () => ({})), update($, projectFilter, () => null)])),
       clean: () => void startClean($),
       confirm: () => void confirmClean($),
+    trash: () => void confirmClean($, { trash: true }),
       cancel: () => void Promise.all([update($, flow, () => 'idle'), update($, dry, () => null)]),
       back: () => void Promise.all([update($, flow, () => 'idle'), update($, cleanError, () => null)]),
       })

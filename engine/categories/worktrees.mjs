@@ -15,7 +15,13 @@ export default {
   clean: (item, ctx) => {
     if (item.internal.orphan) return ctx.rm(item.path);
     ctx.check(item.path);
-    if (sh('git', ['-C', item.internal.repo, 'worktree', 'remove', '--force', item.path]) === null) throw new Error('git worktree remove failed');
+    if (ctx.trash) {
+      // The folder goes to the Trash; git forgets the worktree first, or it keeps the branch checked out.
+      ctx.rm(item.path);
+      sh('git', ['-C', item.internal.repo, 'worktree', 'prune']);
+    } else if (sh('git', ['-C', item.internal.repo, 'worktree', 'remove', '--force', item.path]) === null) {
+      throw new Error('git worktree remove failed');
+    }
     if (item.internal.unique === 0 && item.internal.branch?.startsWith('worktree-')) sh('git', ['-C', item.internal.repo, 'branch', '-D', item.internal.branch]);
     sh('git', ['-C', item.internal.repo, 'worktree', 'prune']);
   },

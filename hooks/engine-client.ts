@@ -13,8 +13,8 @@ export const scanArgv = (root: string, roots = '') => ['node', engine(root), 'sc
 export const rootsArgs = (roots: string) => (roots.trim() === 'off' ? ['--roots', ''] : roots.trim() ? ['--roots', roots.trim()] : [])
 /** The same scan as plain text, for a terminal too narrow for the pane. */
 export const textArgv = (root: string, args: string[] = ['scan']) => ['node', engine(root), ...args]
-export const cleanArgv = (root: string, categories: string[], { yes = false, only = null as string[] | null } = {}) =>
-  ['node', engine(root), 'clean', ...categories, ...(only?.length ? ['--only', only.join(',')] : []), ...(yes ? ['--yes'] : []), '--json', '--progress']
+export const cleanArgv = (root: string, categories: string[], { yes = false, trash = false, only = null as string[] | null } = {}) =>
+  ['node', engine(root), 'clean', ...categories, ...(only?.length ? ['--only', only.join(',')] : []), ...(yes ? ['--yes'] : []), ...(trash ? ['--trash'] : []), '--json', '--progress']
 
 export function parseScan(run: { exitCode: number; stdout: string; stderr: string }): ScanResult {
   if (run.exitCode !== 0) throw new Error(run.stderr.trim() || `sweep engine exited ${run.exitCode}`)

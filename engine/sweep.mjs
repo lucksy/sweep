@@ -18,6 +18,7 @@ const DAYS = valueOf('--days') === null ? null : Number(valueOf('--days'));
 const ONLY = valueOf('--only')?.split(',').filter(Boolean) ?? null;
 const PROGRESS = flags.has('--progress');
 const ROOTS = valueOf('--roots');
+const TRASH = flags.has('--trash');
 const FORCE = flags.has('--force');
 const YES = flags.has('--yes') || flags.has('-y');
 const JSON_OUT = flags.has('--json');
@@ -27,7 +28,7 @@ const width = process.stdout.columns || Number(process.env.COLUMNS) || 100;
 const view = { color, width, details: DETAILS };
 const red = (s) => (color ? `\x1b[31m${s}\x1b[0m` : s);
 
-const ctx = createContext({ days: DAYS, force: FORCE, roots: ROOTS });
+const ctx = createContext({ days: DAYS, force: FORCE, roots: ROOTS, trash: TRASH });
 // NDJSON progress on stderr, so stdout stays the JSON result.
 const onProgress = PROGRESS ? (event) => process.stderr.write(`${JSON.stringify(event)}\n`) : () => {};
 const run = async (ids) => {
@@ -68,9 +69,10 @@ function help() {
   sweep scan [--details] [--json]   scan and describe every category (default)
   sweep explain <id> [--json]       where it comes from, what Claude cleans itself, every item found
   sweep clean <id...|safe|all>      dry run; add --yes to delete
-                [--only <itemId,...>] [--json] [--progress]
+                [--only <itemId,...>] [--trash] [--json] [--progress]
 
   --days N   override the age threshold of age-based categories
+  --trash    move to the Trash instead of deleting (the space returns when it is emptied)
   --roots a,b  folders searched for worktrees Claude no longer lists ('' turns it off)
   --force    also clean review-risk items and clean worktrees whose commits live only on their branch (branch kept)
 

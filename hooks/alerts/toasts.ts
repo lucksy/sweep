@@ -3,7 +3,8 @@
 import { formatBytes } from '../../charts/format'
 import type { ScanResult } from '../../types'
 
-export const cleanToast = (freedBytes: number, failed: number) => `sweep freed ${formatBytes(freedBytes)}${failed ? ` · ${failed} failed` : ''}`
+export const cleanToast = (freedBytes: number, failed: number, trash = false) =>
+  `${trash ? `sweep moved ${formatBytes(freedBytes)} to the Trash` : `sweep freed ${formatBytes(freedBytes)}`}${failed ? ` · ${failed} failed` : ''}`
 
 /** A Bash command that runs this engine's real clean with JSON output (what /sweep:clean runs on yes). */
 export const isEngineClean = (command: string) =>
@@ -13,12 +14,12 @@ export const isEngineClean = (command: string) =>
  * Freed bytes and failures from a Bash result holding the engine's clean JSON,
  * whatever shape the result arrives in; null when it is not a real clean.
  */
-export function cleanFromToolResult(result: unknown): { freed: number; failed: number } | null {
+export function cleanFromToolResult(result: unknown): { freed: number; failed: number; trash: boolean } | null {
   const text = typeof result === 'string' ? result : JSON.stringify(result ?? '')
   const freed = text.match(/\\?"freedBytes\\?":\s*(\d+(?:\.\d+)?)/)
   if (!freed || !/\\?"dryRun\\?":\s*false/.test(text)) return null
   const failedBlock = text.match(/\\?"failed\\?":\s*\[(.*?)\]/s)?.[1] ?? ''
-  return { freed: Number(freed[1]), failed: (failedBlock.match(/\\?"error\\?":/g) ?? []).length }
+  return { freed: Number(freed[1]), failed: (failedBlock.match(/\\?"error\\?":/g) ?? []).length, trash: /\\?"mode\\?":\s*\\?"trash/.test(text) }
 }
 
 /** Toasts for runaway task output not toasted yet this session; marks them toasted. */

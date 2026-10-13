@@ -21,9 +21,9 @@ If no category was given, run `node ${CLAUDE_PLUGIN_ROOT}/engine/sweep.mjs scan`
    - `file-history`: rewind is lost for those sessions.
    - `plugin-versions`: sessions still running an old plugin version should be restarted afterwards.
 
-3. **Ask the user to confirm** with AskUserQuestion. Continue only on a clear yes.
+3. **Ask the user to confirm** with AskUserQuestion, with three options: **Delete**, **Move to Trash** (recoverable; the space comes back when the Trash is emptied), and **Cancel**. Continue only on a clear choice of Delete or Move to Trash.
 
-4. **On yes**, run the same command with `--yes --json` added. Report what was freed, what was kept and why, and anything that failed, from the JSON (`freedBytes`, `removed`, `kept`, `skipped`, `failed`).
+4. **On Delete**, run the same command with `--yes --json` added. **On Move to Trash**, add `--yes --trash --json`. Report what was freed or moved, what was kept and why, and anything that failed, from the JSON (`mode`, `freedBytes`, `removed`, `kept`, `skipped`, `failed`). After a move to the Trash, say the space returns once the Trash is emptied.
 
 Rules:
 - Pass `--force` only when the user said "force" themselves.

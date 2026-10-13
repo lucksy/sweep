@@ -56,6 +56,7 @@ export type CleanRow = { id: string; category: string; path: string }
 export type CleanResult = {
   schema: 1
   dryRun: boolean
+  mode?: 'delete' | 'trash'
   startedAt: string
   durationMs: number
   requested: { categories: string[]; only: string[] | null; force: boolean }

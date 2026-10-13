@@ -146,7 +146,8 @@ export function renderClean(result, categoryIds, { width = 100, color = false } 
       lines.push(p.dim(`  ${id}: nothing to clean`));
     } else {
       lines.push(`  ${p.bold(id)}: ${removed.length} item(s), ${fmt(removed.reduce((t, r) => t + r.bytes, 0))}`);
-      for (const r of removed) lines.push((result.dryRun ? p.dim : p.green)(`    ${result.dryRun ? 'would remove' : 'removed'} ${fmt(r.bytes).padStart(6)}  ${truncateMiddle(r.path, w - 26)}`));
+      const verb = result.dryRun ? 'would remove' : result.mode === 'trash' ? 'trashed' : 'removed';
+      for (const r of removed) lines.push((result.dryRun ? p.dim : p.green)(`    ${verb} ${fmt(r.bytes).padStart(6)}  ${truncateMiddle(r.path, w - 26)}`));
       for (const r of failed) lines.push(p.red(`    failed          ${truncateMiddle(r.path, w - 40)}: ${r.error}`));
     }
     if (kept.length) lines.push(p.dim(`    kept: ${keptSummary(kept.map((k) => ({ ...k, cleanable: false }))).join(' · ')}`));
@@ -155,7 +156,9 @@ export function renderClean(result, categoryIds, { width = 100, color = false } 
   lines.push('');
   lines.push(result.dryRun
     ? `  ${p.bold('Would free')} ${fmt(result.freedBytes)}. Run again with --yes to delete.`
-    : `  ${p.bold('Freed')} ${fmt(result.freedBytes)}${result.failed.length ? p.red(`, ${result.failed.length} failed`) : ''}`);
+    : result.mode === 'trash'
+      ? `  ${p.bold('Moved')} ${fmt(result.freedBytes)} to the Trash${result.failed.length ? p.red(`, ${result.failed.length} failed`) : ''}. Empty the Trash to free the space.`
+      : `  ${p.bold('Freed')} ${fmt(result.freedBytes)}${result.failed.length ? p.red(`, ${result.failed.length} failed`) : ''}`);
   lines.push('');
   return lines.join('\n');
 }

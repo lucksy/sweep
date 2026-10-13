@@ -17,6 +17,7 @@ test('skills reach the engine only, and never name a delete command', () => {
 test('the clean skill always dry-runs, asks, and only then deletes', () => {
   const text = read('clean');
   const dry = text.indexOf('Dry run first'), ask = text.indexOf('AskUserQuestion'), yes = text.indexOf('--yes --json');
+  assert.match(text, /--yes --trash --json/);
   assert.ok(dry > 0 && dry < ask && ask < yes);
   assert.match(text, /--force` only when the user said "force"/);
 });

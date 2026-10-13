@@ -8,6 +8,7 @@ import { execFile } from 'node:child_process';
 
 import { alive, encodeProject, isDir, limit, ls, readJson, sh, shAsync, stat } from './fsx.mjs';
 import { createGuard } from './guard.mjs';
+import { moveToTrash } from './trash.mjs';
 
 // `du -k` of a folder, or one pass over a tree with `-d depth`: path → bytes.
 // du exits non-zero on unreadable folders but still prints what it measured.
@@ -29,7 +30,7 @@ function du(args) {
 // Where people keep code: searched for Claude worktrees ~/.claude.json no longer lists.
 const DEFAULT_ROOTS = ['Projects', 'projects', 'code', 'src', 'dev', 'work', 'Developer', 'repos'];
 
-export function createContext({ env = process.env, days = null, force = false, roots = null } = {}) {
+export function createContext({ env = process.env, days = null, force = false, roots = null, trash = false } = {}) {
   // SWEEP_* point the engine alone at another tree (a sandbox) without moving
   // Claude Code's own home, config or login.
   const home = env.SWEEP_HOME || env.HOME || os.homedir();
@@ -56,7 +57,14 @@ export function createContext({ env = process.env, days = null, force = false, r
   const ctx = {
     home, claudeDir, tmpBase, tmpRoot, cliVersions, force,
     once,
-    rm: (p) => guard.rm(p),
+    trash,
+    // Delete, or with `trash` move to the Trash; the guard checks the path either way.
+    rm: (p) => {
+      if (!trash) return guard.rm(p);
+      const abs = path.resolve(p);
+      guard.check(abs);
+      moveToTrash(abs, { home, dir: env.SWEEP_TRASH_DIR || null });
+    },
     // For deletions git makes (`git worktree remove`): the same rules, checked first.
     check: (p) => guard.check(path.resolve(p)),
     days: (dflt) => (Number.isFinite(days) ? days : dflt),

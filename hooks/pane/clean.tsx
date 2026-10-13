@@ -32,6 +32,7 @@ export type CleanActions = {
   selectSafe: () => void
   clean: () => void
   confirm: () => void
+  trash: () => void
   cancel: () => void
   back: () => void
 }
@@ -62,6 +63,7 @@ export function CleanBar(E: El, d: CleanData, a: CleanActions) {
         {d.dry.kept.length > 0 && <Text dimColor>{`  kept ${d.dry.kept.length}: they hold work or are in use`}</Text>}
         <Box gap={2} marginTop={1}>
           {d.dry.removed.length > 0 && <Button key="confirm" label={`Delete ${formatBytes(d.dry.freedBytes)}`} hotkey="y" variant="primary" onPress={() => a.confirm()} />}
+          {d.dry.removed.length > 0 && <Button key="trash" label={`Move ${formatBytes(d.dry.freedBytes)} to Trash`} hotkey="t" onPress={() => a.trash()} />}
           <Button key="cancel" label="Cancel" hotkey="n" onPress={() => a.cancel()} />
         </Box>
       </Box>
@@ -70,7 +72,7 @@ export function CleanBar(E: El, d: CleanData, a: CleanActions) {
 
   if (d.flow === 'cleaning') {
     const total = d.dry?.removed.length ?? 0
-    return <Box key="clean-bar"><Text color="warning">{`Removing… ${d.removedSoFar}/${total} · ${formatBytes(d.freedSoFar)} freed`}</Text></Box>
+    return <Box key="clean-bar"><Text color="warning">{`Removing… ${d.removedSoFar}/${total} · ${formatBytes(d.freedSoFar)} done`}</Text></Box>
   }
 
   if (d.flow === 'error') {
@@ -88,7 +90,9 @@ export function CleanBar(E: El, d: CleanData, a: CleanActions) {
       {d.flow === 'done' && d.result && (
         <Box key="done" flexDirection="column">
           <Text color={d.result.failed.length ? 'warning' : 'success'}>
-            {`Freed ${formatBytes(d.result.freedBytes)} · ${d.result.removed.length} removed · ${d.result.kept.length} kept · ${d.result.failed.length} failed`}
+            {d.result.mode === 'trash'
+              ? `Moved ${formatBytes(d.result.freedBytes)} to the Trash · empty it to free the space · ${d.result.removed.length} moved · ${d.result.kept.length} kept · ${d.result.failed.length} failed`
+              : `Freed ${formatBytes(d.result.freedBytes)} · ${d.result.removed.length} removed · ${d.result.kept.length} kept · ${d.result.failed.length} failed`}
           </Text>
           {d.result.failed.map((f, i) => <Box key={`failed-${i}`}><Text color="error" wrap="truncate-middle">{`  ${f.path}: ${f.error}`}</Text></Box>)}
         </Box>

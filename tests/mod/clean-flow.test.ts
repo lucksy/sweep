@@ -91,3 +91,17 @@ test('an engine that does not answer JSON puts the flow in error, with a way bac
   await pane.press({ key: 'back' })
   expect(await pane.find({ text: /^Selected: 1 category/ })).toBeDefined()
 })
+
+test('Move to Trash runs the clean with --trash and says the space returns when the Trash is emptied', async ($, on) => {
+  const { seen, pane } = await ready($, on, engine({ mode: 'trash' }))
+  await pane.press({ key: 'toggle-worktrees' })
+  await pane.press({ key: 'clean' })
+  const trash = await pane.find({ key: 'trash' })
+  expect(trash?.props.hotkey).toBe('t')
+  expect(trash?.props.label).toBe('Move 2.7G to Trash')
+  await pane.press({ key: 'trash' })
+  await seen.clock.settle()
+  expect(cleans(seen)[1]).toEqual(['clean', 'worktrees', '--only', 'i_wt1,i_wt2', '--yes', '--trash', '--json', '--progress'])
+  expect(await pane.find({ text: /^Moved 2\.7G to the Trash · empty it to free the space · 2 moved/ })).toBeDefined()
+  expect(seen.toasts).toEqual(['sweep moved 2.7G to the Trash'])
+})
