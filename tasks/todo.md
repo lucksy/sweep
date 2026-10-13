@@ -6,7 +6,7 @@ created: 2026-10-13
 # Tasks: sweep
 
 Paths are relative to the project root, `~/Projects/clear` (no rename). sweep stores no data: no task may add a cache, history, lock or log file, or use `$.store`. Unless a task says otherwise, every task is verified with:
-- `node --test "tests/**/*.test.*"`
+- `node --test "tests/**/*.test.mjs"`
 - `claude plugin validate --strict .`
 - for tasks that touch `hooks/` or `charts/`: `npx -p typescript tsc -p .` and `claude plugin test .`
 
@@ -27,7 +27,7 @@ Then turn the clearx sandbox script into `tests/fixtures/sandbox.mjs`, with the 
 - [x] `claude plugin validate --strict .` passes for `sweep`
 
 **Verification:**
-- [x] `node --test "tests/**/*.test.*"`
+- [x] `node --test "tests/**/*.test.mjs"`
 - [x] `bin/sweep scan` vs `clearx/bin/clearx list` (diff of category rows)
 
 **Dependencies:** None
@@ -36,10 +36,10 @@ Then turn the clearx sandbox script into `tests/fixtures/sandbox.mjs`, with the 
 
 **Estimated scope:** M
 
-**Notes:** Built in `~/Projects/clear` (no rename). `sweep scan` and `clearx list` category rows are identical on this machine (2026-10-13). `node --test tests/` needs a glob on Node 22, so docs now say `node --test "tests/**/*.test.*"`.
+**Notes:** Built in `~/Projects/clear` (no rename). `sweep scan` and `clearx list` category rows are identical on this machine (2026-10-13). `node --test tests/` needs a glob on Node 22, so docs now say `node --test "tests/**/*.test.mjs"`.
 
 ## Task 2: Mod spike: `/sweep` shows the engine's total in a pane
-**Status:** todo
+**Status:** done · started 2026-10-13 · done 2026-10-13
 
 **Description:** The thinnest vertical slice through the riskiest part:
 - a mod that registers `/sweep`
@@ -49,19 +49,21 @@ Then turn the clearx sandbox script into `tests/fixtures/sandbox.mjs`, with the 
 While doing it, answer Q1–Q3 from `claude-code.d.ts` and a quick experiment, and record the answers in `tasks/plan.md`.
 
 **Acceptance criteria:**
-- [ ] `/sweep` in `claude --plugin-dir .` opens a pane with the real reclaimable total
-- [ ] Q1, Q2, Q3 answered in `tasks/plan.md`, with the API names to use
-- [ ] One `hooks/*.test.ts` covers the command and the pane render
+- [x] `/sweep` in `claude --plugin-dir .` opens a pane with the real reclaimable total
+- [x] Q1, Q2, Q3 answered in `tasks/plan.md`, with the API names to use
+- [x] One `hooks/*.test.ts` covers the command and the pane render
 
 **Verification:**
-- [ ] `claude plugin test .` and `npx -p typescript tsc -p .`
-- [ ] Manual: `/sweep` in this terminal
+- [x] `claude plugin test .` and `npx -p typescript tsc -p .`
+- [ ] Manual: `/sweep` in this terminal (deferred to Checkpoint D: needs an interactive session with `claude --plugin-dir ~/Projects/clear`)
 
 **Dependencies:** T1
 
 **Files likely touched:** `hooks/hooks.json`, `hooks/register.tsx`, `hooks/engine-client.ts`, `types/index.d.ts`, `hooks/pane.test.ts`
 
 **Estimated scope:** M
+
+**Notes:** Tests live in `tests/mod/` (spike, shared `world.ts`). The engine still prints the clearx JSON shape until T4.
 
 ## Checkpoint A: Foundation
 - [ ] All tests pass and validate is clean
@@ -79,7 +81,7 @@ While doing it, answer Q1–Q3 from `claude-code.d.ts` and a quick experiment, a
 - [ ] Allowed paths are removed
 
 **Verification:**
-- [ ] `node --test "tests/engine/*.test.*"guard.test.mjs`
+- [ ] `node --test "tests/engine/*.test.mjs"guard.test.mjs`
 
 **Dependencies:** T1
 
@@ -102,7 +104,7 @@ Make `scan --json` emit the schema-1 contract (SPEC-engine §Contract). Add `rea
 - [ ] Item ids are identical across two scans of an unchanged fixture
 
 **Verification:**
-- [ ] `node --test "tests/engine/*.test.*"`
+- [ ] `node --test "tests/engine/*.test.mjs"`
 
 **Dependencies:** T3
 
@@ -121,7 +123,7 @@ Make `scan --json` emit the schema-1 contract (SPEC-engine §Contract). Add `rea
 - [ ] Projects roll up per category, and `exists: false` is set for a deleted path
 
 **Verification:**
-- [ ] `node --test "tests/engine/*.test.*"footprint.test.mjs`
+- [ ] `node --test "tests/engine/*.test.mjs"footprint.test.mjs`
 
 **Dependencies:** T4
 
@@ -144,7 +146,7 @@ Measure on this machine: baseline 28–43 s, target ≤ 15 s.
 - [ ] Three real-machine runs at ≤ 15 s each, with the timings recorded in this task
 
 **Verification:**
-- [ ] `node --test "tests/engine/*.test.*"`
+- [ ] `node --test "tests/engine/*.test.mjs"`
 - [ ] `time bin/sweep scan --json > /dev/null` ×3
 
 **Dependencies:** T5
@@ -168,7 +170,7 @@ Measure on this machine: baseline 28–43 s, target ≤ 15 s.
 - [ ] `--progress` writes only NDJSON to stderr, and stdout stays pure JSON
 
 **Verification:**
-- [ ] `node --test "tests/engine/*.test.*"clean.test.mjs`
+- [ ] `node --test "tests/engine/*.test.mjs"clean.test.mjs`
 
 **Dependencies:** T4
 
@@ -198,7 +200,7 @@ Measure on this machine: baseline 28–43 s, target ≤ 15 s.
 - [ ] `--json` output equals the engine result, with nothing else on stdout
 
 **Verification:**
-- [ ] `node --test "tests/cli/*.test.*"`
+- [ ] `node --test "tests/cli/*.test.mjs"`
 
 **Dependencies:** T5, T7
 
@@ -226,7 +228,7 @@ Removed 2026-10-13: sweep stores no data (SPEC-history.md). Kept as a number onl
 - [ ] Palette colors pass ≥ 3:1 contrast on dark and light backgrounds
 
 **Verification:**
-- [ ] `node --test "tests/charts/*.test.*"` and `npx -p typescript tsc -p .`
+- [ ] `claude plugin test .` and `npx -p typescript tsc -p .`
 
 **Dependencies:** T1
 
@@ -245,7 +247,7 @@ Removed 2026-10-13: sweep stores no data (SPEC-history.md). Kept as a number onl
 - [ ] Snapshot tests of decoded cells for fixed inputs
 
 **Verification:**
-- [ ] `node --test "tests/charts/*.test.*"`
+- [ ] `claude plugin test .`
 
 **Dependencies:** T10
 
@@ -266,7 +268,7 @@ Removed 2026-10-13: sweep stores no data (SPEC-history.md). Kept as a number onl
 - [ ] Each pixel chart has the same `legend` and `alt` as its cell twin
 
 **Verification:**
-- [ ] `node --test "tests/charts/*.test.*"`
+- [ ] `claude plugin test .`
 
 **Dependencies:** T11
 
@@ -521,7 +523,7 @@ Remove the old `skills/list` and `skills/clearx`.
 - [ ] Clean install from the local marketplace works in a fresh session
 
 **Verification:**
-- [ ] `node --test "tests/**/*.test.*"`, `claude plugin test .`, `claude plugin validate --strict .`, `npx -p typescript tsc -p .`
+- [ ] `node --test "tests/**/*.test.mjs"`, `claude plugin test .`, `claude plugin validate --strict .`, `npx -p typescript tsc -p .`
 - [ ] `claude plugin marketplace add ~/Projects/clear && claude plugin install sweep@sweep`, then `/sweep`
 
 **Dependencies:** T13, T19, T22

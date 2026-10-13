@@ -17,6 +17,8 @@ Turn the clearx prototype into **sweep**, a Claude Code plugin with one Node eng
 - **Charts are pure data → data** (`{ columns, rows, cells | png, legend, alt }`). Why: testable with `node --test` without Claude Code; the pane only places them. Cell packing and the PNG encoder are copied from agent-skills-mods (the author's own MIT code), not imported.
 - **No storage of any kind.** No cache, history, lock or log file, and no `$.store`. Within a session the last scan lives in `$.state` (memory). Why: user decision. Consequences: no charts over time; hides last for a session; skill cleans are toasted by reading the engine's JSON from the Bash tool result.
 - **Keep clearx working until T23.** Why: a usable tool exists the whole time, and the sandbox tests prove the move changes no behavior.
+- **`$` never crosses an import.** The engine refuses a module that passes `$` to an imported function (found in T2). Every `$.noun.event()` call lives in `hooks/register.tsx` (or functions declared in it); other files are pure: argv builders, parsers, and views that receive element constructors and data.
+- **Two test runners.** `claude plugin test .` runs every `*.test.ts` (mod and charts, in the mod's sandbox); `node --test "tests/**/*.test.mjs"` runs the engine and CLI tests.
 - **Tests never touch the real HOME.** The sandbox fixture (from the clearx test script) is the first thing built (T1).
 
 ## Dependency Graph
@@ -48,7 +50,7 @@ Details, acceptance criteria and verification for each task are in `tasks/todo.m
 - [ ] T2: Mod spike: `/sweep` shows the engine's total in a pane (answers Q1–Q3)
 
 ### Checkpoint A: Foundation
-- [ ] `node --test "tests/**/*.test.*"` green; `claude plugin validate --strict .` passes; `/sweep` opens a pane with a real number; Q1–Q3 answered in this file
+- [ ] `node --test "tests/**/*.test.mjs"` green; `claude plugin validate --strict .` passes; `/sweep` opens a pane with a real number; Q1–Q3 answered in this file
 
 ### Phase 1: Engine
 - [ ] T3: Guard rails as their own module, with tests that try to break them
@@ -115,8 +117,11 @@ Details, acceptance criteria and verification for each task are in `tasks/todo.m
 ## Open Questions
 
 - Q1 (T2, T21): Does `userConfig` accept `type: "number"`?
+  - Finding (T2, 2026-10-13): yes. `ConfigKind` in the 2.1.296 types includes `number`, and `claude plugin validate` accepts a `number` field.
 - Q2 (T2, T15): How does the mod read the terminal type (pixels)?
+  - Finding (T2): `$.env.get("TERM_PROGRAM")` / `$.env.get("KITTY_WINDOW_ID")` (literal names). The plugin folder is `$.plugin.root`.
 - Q3 (T2, T14): Is `$.state` big enough for a full scan with items?
+  - Finding (T2): yes. A real scan is ~70 KB of JSON; a 300 KB scan round-trips through state in `tests/mod/spike.test.ts`.
 - Q4 (T23): Uninstall clearx automatically, or leave it to you? Proposed: leave it, with README steps.
 - Q5 (T1): Who renames `~/Projects/clear` → `~/Projects/sweep`?
   → A: No rename: develop in this folder · @user 2026-10-13
