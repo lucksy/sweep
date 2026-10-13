@@ -7,7 +7,7 @@ import type { Elements } from 'claude-code'
 import { formatBytes } from '../../charts/format'
 import type { Progress, ScanResult, ScanStatus } from '../../types'
 import { footprintChart, reclaimTreemap, ChartView, type DrawStyle } from './charts'
-import { headline, isWide, selectable, selectedBytes } from './model'
+import { headline, isWide, selectable } from './model'
 
 export type El = Pick<Elements['terminal'], 'Box' | 'Text' | 'Button' | 'Markdown'> & Partial<Pick<Elements['terminal'], 'Raster' | 'Image'>>
 
@@ -29,6 +29,8 @@ export type OverviewActions = {
   toggle: (id: string) => void
   selectSafe: () => void
   drill: (id: string) => void
+  /** The clean flow's bar, drawn under the table (hooks/pane/clean.tsx). */
+  cleanBar: () => unknown
 }
 
 const RISK_COLOR = { safe: 'success', caution: 'warning', review: 'error' } as const
@@ -103,18 +105,6 @@ export function CategoryTable(E: El, d: OverviewData, a: OverviewActions) {
   )
 }
 
-export function SelectionBar(E: El, d: OverviewData, a: Pick<OverviewActions, 'selectSafe'>) {
-  const { Box, Text, Button } = E
-  if (!d.scan) return null
-  const bytes = selectedBytes(d.scan, d.selected, d.selectedItems)
-  return (
-    <Box key="selection" gap={2}>
-      <Text>{`Selected: ${d.selected.length} categor${d.selected.length === 1 ? 'y' : 'ies'} · ${formatBytes(bytes)}`}</Text>
-      <Button key="select-safe" label="Select safe" hotkey="s" onPress={() => a.selectSafe()} />
-    </Box>
-  )
-}
-
 /** Charts beside the table when the pane is wide, above it when narrow. */
 export function Overview(E: El, d: OverviewData, a: OverviewActions) {
   const { Box, Text } = E
@@ -145,7 +135,7 @@ export function Overview(E: El, d: OverviewData, a: OverviewActions) {
           </Box>
         </Box>
       )}
-      {SelectionBar(E, d, a)}
+      {a.cleanBar() as never}
     </Box>
   )
 }

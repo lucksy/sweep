@@ -9,8 +9,10 @@ export const ROOT = '/plugins/sweep'
 export type Engine = {
   /** What `sweep scan --json` prints; a function sees the argv. */
   scan?: unknown
-  /** What `sweep clean … --json` prints. */
-  clean?: unknown
+  /** What `sweep clean … --json` prints; a function sees the argv. */
+  clean?: unknown | ((argv: readonly string[]) => unknown)
+  /** The exit code of a clean (a scan exits with `exitCode`). */
+  cleanExit?: number
   exitCode?: number
   /** NDJSON progress lines the scan writes to stderr. */
   progress?: unknown[]
@@ -31,8 +33,12 @@ export function world(on: On, engine: Engine = {}, env: Record<string, string> =
     release: () => {},
     placed: true,
   }
-  const answer = (argv: readonly string[]) =>
-    JSON.stringify(argv.includes('clean') ? engine.clean ?? {} : engine.scan ?? {})
+  const answer = (argv: readonly string[]) => {
+    if (!argv.includes('clean')) return JSON.stringify(engine.scan ?? {})
+    const clean = typeof engine.clean === 'function' ? (engine.clean as (a: readonly string[]) => unknown)(argv) : engine.clean
+    return typeof clean === 'string' ? clean : JSON.stringify(clean ?? {})
+  }
+  const exitOf = (argv: readonly string[]) => (argv.includes('clean') ? engine.cleanExit ?? 0 : engine.exitCode ?? 0)
 
   on('process.run', (_$, e) => {
     seen.runs.push([...e.argv])
@@ -42,10 +48,13 @@ export function world(on: On, engine: Engine = {}, env: Record<string, string> =
   on('process.spawn', async function* (_$, e) {
     seen.runs.push([...e.argv])
     seen.spawns.push([...e.argv])
-    for (const line of engine.progress ?? []) yield { stream: 'stderr' as const, text: `${JSON.stringify(line)}\n` }
-    await gate
+    const events = e.argv.includes('clean') && e.argv.includes('--yes')
+      ? (JSON.parse(answer(e.argv)) as { removed?: { id: string; bytes: number }[] }).removed?.map((r) => ({ event: 'removed', id: r.id, bytes: r.bytes })) ?? []
+      : engine.progress ?? []
+    for (const line of events) yield { stream: 'stderr' as const, text: `${JSON.stringify(line)}\n` }
+    if (!e.argv.includes('clean')) await gate
     yield { stream: 'stdout' as const, text: answer(e.argv) }
-    return { value: { code: engine.exitCode ?? 0, signal: null } }
+    return { value: { code: exitOf(e.argv), signal: null } }
   })
   on('command.register', (_$, e) => {
     seen.commands.push({ name: e.name, description: e.description, argumentHint: e.argumentHint })

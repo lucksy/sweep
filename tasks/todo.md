@@ -380,7 +380,7 @@ Remove the old `skills/list` and `skills/clearx`.
 **Notes:** Every surface's element table names every element (the missing ones draw nothing), so the pane decides Raster/Image by e.surface === 'terminal'. Text takes no key, so keyed fallbacks are Boxes. Overview shows the footprint bar and the reclaimable treemap; the category bar list is used by the Projects view (T18). Manual Ghostty / Terminal.app check is at Checkpoint D.
 
 ## Task 16: Pane clean flow: select, dry run, confirm, progress, done
-**Status:** todo
+**Status:** done · started 2026-10-13 · done 2026-10-13
 
 **Description:** The state machine of SPEC-pane §Clean flow:
 - Select safe, toggles, Dry run, Clean…
@@ -391,18 +391,20 @@ Remove the old `skills/list` and `skills/clearx`.
 - review categories and kept items can't be selected
 
 **Acceptance criteria:**
-- [ ] A test per transition in the diagram, including cancel, locked and partial failure
-- [ ] No single key deletes: Clean's and Confirm's hotkeys differ, and Confirm exists only in `confirm`
-- [ ] The engine is called with `--via pane` and with the exact selection as `--only` when items were unticked
+- [x] A test per transition in the diagram, including cancel, locked and partial failure
+- [x] No single key deletes: Clean's and Confirm's hotkeys differ, and Confirm exists only in `confirm`
+- [x] The engine is called with `--via pane` and with the exact selection as `--only` when items were unticked
 
 **Verification:**
-- [ ] `claude plugin test .`
+- [x] `claude plugin test .`
 
 **Dependencies:** T15
 
 **Files likely touched:** `hooks/pane/clean-flow.ts`, `hooks/pane/overview.tsx`, `hooks/engine-client.ts`, `hooks/clean-flow.test.ts`
 
 **Estimated scope:** M
+
+**Notes:** Changes from SPEC-pane: Cancel is hotkey n (a Button hotkey is one digit or letter, so Esc can't be one); Dry run and Clean… were one step (both lead to the confirm screen), so there is one Clean… button on c; the 'locked' state is gone with the lock file. The Delete step passes --only with exactly the ids the dry run showed.
 
 ## Task 17: Category drill-down: texts, items, per-item selection, age histogram
 **Status:** todo

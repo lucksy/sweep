@@ -39,3 +39,9 @@ export function selectedBytes(scan: ScanResult, selected: string[], selectedItem
 
 /** The ticked categories in report order, ready for the engine. */
 export const selectedIds = (scan: ScanResult, selected: string[]) => scan.categories.map((c) => c.id).filter((id) => selected.includes(id))
+
+/** Item ids for `--only` when some items of a ticked category were unticked; null when whole categories go. */
+export function onlyIds(scan: ScanResult, selected: string[], selectedItems: Record<string, string[]>): string[] | null {
+  if (!selected.some((id) => selectedItems[id])) return null
+  return scan.categories.filter((c) => selected.includes(c.id)).flatMap((c) => selectedItems[c.id] ?? c.items.filter((i) => i.cleanable).map((i) => i.id))
+}

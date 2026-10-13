@@ -88,6 +88,8 @@ declare module 'claude-code' {
       dry: CleanResult | null
       result: CleanResult | null
       freedThisSession: number
+      cleaning: { removed: number; freed: number } | null
+      cleanError: string | null
       hidden: string[]
     }
   }

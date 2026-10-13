@@ -6,9 +6,10 @@ import { atom, read, update } from 'claude-code'
 import type { Elements, EngineInterface, Register } from 'claude-code'
 
 import type { Flow, Progress, ScanResult, ScanStatus, View, CleanResult } from '../types'
-import { formatBytes, parseScan, progressOf, scanArgv, takeLines, textArgv } from './engine-client'
+import { cleanArgv, formatBytes, parseClean, parseScan, progressOf, scanArgv, takeLines, textArgv } from './engine-client'
 import { resolveStyle, type ChartStyle, type TerminalEnv } from '../charts/terminal'
-import { ago, safeIds, toggle } from './pane/model'
+import { ago, onlyIds, safeIds, selectedIds, toggle } from './pane/model'
+import { CleanBar } from './pane/clean'
 import { Overview } from './pane/overview'
 
 const PANE = 'sweep'
@@ -28,6 +29,9 @@ const selectedItems = atom({ plugin: 'sweep', key: 'selectedItems' } as const, {
 const flow = atom({ plugin: 'sweep', key: 'flow' } as const, 'idle' as Flow)
 const dry = atom({ plugin: 'sweep', key: 'dry' } as const, null as CleanResult | null)
 const freed = atom({ plugin: 'sweep', key: 'freedThisSession' } as const, 0)
+const outcome = atom({ plugin: 'sweep', key: 'result' } as const, null as CleanResult | null)
+const cleaning = atom({ plugin: 'sweep', key: 'cleaning' } as const, null as { removed: number; freed: number } | null)
+const cleanError = atom({ plugin: 'sweep', key: 'cleanError' } as const, null as string | null)
 
 // The scan in flight, so a second request joins it instead of starting another.
 let inflight: Promise<void> | null = null
@@ -39,31 +43,37 @@ function rescan($: EngineInterface): Promise<void> {
   return inflight
 }
 
+// Runs the engine as a child: stdout collected, stderr's NDJSON events handed to `onEvent`.
+async function runEngine($: EngineInterface, argv: string[], onEvent: (event: Record<string, unknown>) => Promise<void>) {
+  let stdout = ''
+  let stderr = ''
+  let pending = ''
+  const child = $.process.spawn({ argv })
+  const pieces = child[Symbol.asyncIterator]()
+  let piece = await pieces.next()
+  while (!piece.done) {
+    if (piece.value.stream === 'stdout') stdout += piece.value.text
+    else {
+      const { events, rest } = takeLines(pending + piece.value.text)
+      pending = rest
+      if (!events.length && !piece.value.text.trim().startsWith('{')) stderr += piece.value.text
+      for (const event of events) await onEvent(event)
+    }
+    piece = await pieces.next()
+  }
+  return { exitCode: piece.value?.code ?? 1, stdout, stderr }
+}
+
 async function runScan($: EngineInterface) {
   await update($, status, () => 'scanning')
   await update($, progress, () => null)
   await update($, failure, () => null)
-  let stdout = ''
-  let stderr = ''
-  let pending = ''
   try {
-    const child = $.process.spawn({ argv: scanArgv($.plugin.root) })
-    const pieces = child[Symbol.asyncIterator]()
-    let piece = await pieces.next()
-    while (!piece.done) {
-      if (piece.value.stream === 'stdout') stdout += piece.value.text
-      else {
-        stderr += piece.value.text
-        const { events, rest } = takeLines(pending + piece.value.text)
-        pending = rest
-        for (const event of events) {
-          const p = progressOf(event)
-          if (p) await update($, progress, () => p)
-        }
-      }
-      piece = await pieces.next()
-    }
-    const result = parseScan({ exitCode: piece.value?.code ?? 1, stdout, stderr: stderr.split('\n').filter((l) => !l.startsWith('{')).join('\n') })
+    const run = await runEngine($, scanArgv($.plugin.root), async (event) => {
+      const p = progressOf(event)
+      if (p) await update($, progress, () => p)
+    })
+    const result = parseScan(run)
     const now = await $.clock.now()
     await update($, scanned, () => result)
     await update($, scannedAt, () => now)
@@ -73,6 +83,52 @@ async function runScan($: EngineInterface) {
     await update($, status, () => 'error')
   }
   await update($, progress, () => null)
+}
+
+const message = (error: unknown) => (error instanceof Error ? error.message : String(error))
+
+// Clean step 1: a dry run of the selection, then the confirm step.
+async function startClean($: EngineInterface) {
+  const scan = await read($, scanned)
+  if (!scan || (await read($, flow)) === 'cleaning') return
+  const ids = selectedIds(scan, await read($, selected))
+  if (!ids.length) return
+  await update($, flow, () => 'dryrun')
+  try {
+    const run = await runEngine($, cleanArgv($.plugin.root, ids, { only: onlyIds(scan, ids, await read($, selectedItems)) }), async () => {})
+    const result = parseClean(run.stdout)
+    await update($, dry, () => result)
+    await update($, flow, () => 'confirm')
+  } catch (error) {
+    await update($, cleanError, () => message(error))
+    await update($, flow, () => 'error')
+  }
+}
+
+// Clean step 2: delete exactly the items the dry run showed (`--only` their ids).
+async function confirmClean($: EngineInterface) {
+  const shown = await read($, dry)
+  if (!shown || (await read($, flow)) !== 'confirm' || !shown.removed.length) return
+  await update($, flow, () => 'cleaning')
+  await update($, cleaning, () => ({ removed: 0, freed: 0 }))
+  try {
+    const argv = cleanArgv($.plugin.root, shown.requested.categories, { yes: true, only: shown.removed.map((r) => r.id) })
+    const run = await runEngine($, argv, async (event) => {
+      if (event.event === 'removed') await update($, cleaning, (c) => ({ removed: (c?.removed ?? 0) + 1, freed: (c?.freed ?? 0) + Number(event.bytes ?? 0) }))
+    })
+    const result = parseClean(run.stdout)
+    await update($, outcome, () => result)
+    await update($, freed, (n) => n + result.freedBytes)
+    await update($, selected, () => [])
+    await update($, selectedItems, () => ({}))
+    await update($, dry, () => null)
+    await update($, flow, () => 'done')
+    void rescan($)
+  } catch (error) {
+    await update($, cleanError, () => message(error))
+    await update($, flow, () => 'error')
+  }
+  await update($, cleaning, () => null)
 }
 
 /** Scan unless this session has a recent scan already. */
@@ -142,15 +198,28 @@ export const register: Register = (on, options) => {
       freedThisSession: await read($, freed),
       style: resolveStyle(chartStyle, terminal, !!Raster),
     }
+    const currentFlow = await read($, flow)
+    const shown = await read($, dry)
+    const done = await read($, outcome)
+    const progressNow = await read($, cleaning)
+    const cleanFailure = await read($, cleanError)
     return Overview(E, data, {
       rescan: () => void rescan($),
       toggle: (id) => void update($, selected, (list) => toggle(list, id)),
       selectSafe: () => void (result && update($, selected, () => safeIds(result))),
       drill: (id) => void Promise.all([update($, focusId, () => id), update($, view, () => 'category')]),
+      cleanBar: () => CleanBar(E, {
+        scan: result, flow: currentFlow, selected: data.selected, selectedItems: data.selectedItems,
+        dry: shown, result: done, removedSoFar: progressNow?.removed ?? 0, freedSoFar: progressNow?.freed ?? 0,
+        error: cleanFailure, freedThisSession: data.freedThisSession,
+      }, {
+        selectSafe: () => void (result && update($, selected, () => safeIds(result))),
+        clean: () => void startClean($),
+        confirm: () => void confirmClean($),
+        cancel: () => void Promise.all([update($, flow, () => 'idle'), update($, dry, () => null)]),
+        back: () => void Promise.all([update($, flow, () => 'idle'), update($, cleanError, () => null)]),
+      }),
     })
   })
 }
 
-// Read by later tasks (clean flow, views); declared here so the state contract stays whole.
-void flow
-void dry
