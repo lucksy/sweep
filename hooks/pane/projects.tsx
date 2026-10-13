@@ -50,8 +50,9 @@ export function Tabs(E: El, view: 'overview' | 'projects', a: { tab: (v: 'overvi
   const { Box, Button } = E
   return (
     <Box key="tabs" gap={2}>
-      <Button key="tab-overview" label={view === 'overview' ? '[Overview]' : 'Overview'} hotkey="1" onPress={() => a.tab('overview')} />
-      <Button key="tab-projects" label={view === 'projects' ? '[Projects]' : 'Projects'} hotkey="2" onPress={() => a.tab('projects')} />
+      {/* A Button draws its own brackets: the active tab is the primary one, the other dim. */}
+      <Button key="tab-overview" label="Overview" hotkey="1" variant={view === 'overview' ? 'primary' : 'secondary'} dimColor={view !== 'overview'} onPress={() => a.tab('overview')} />
+      <Button key="tab-projects" label="Projects" hotkey="2" variant={view === 'projects' ? 'primary' : 'secondary'} dimColor={view !== 'projects'} onPress={() => a.tab('projects')} />
     </Box>
   )
 }

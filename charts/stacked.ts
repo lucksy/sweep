@@ -1,5 +1,5 @@
-// The footprint bar (SPEC-charts §1): one row of parts sized by bytes, with
-// eighth-cell precision where two parts meet, and a second row underlining
+// The footprint bar (SPEC-charts §1): one row of parts sized by bytes, to the
+// nearest cell where two parts meet, and a second row underlining
 // the reclaimable share of each part.
 
 import { formatBytes } from './format'
@@ -32,9 +32,12 @@ export function stacked(parts: Part[], columns: number): CellChart {
     const lo = c * 8, hi = lo + 8
     const inCell = spans.map(([s, e], i) => ({ i, n: Math.max(0, Math.min(e, hi) - Math.max(s, lo)) })).filter((x) => x.n > 0)
     if (!inCell.length) continue
+    // No background colors: terminals paint a cell's background taller than its
+    // block glyph, which shows as notches. A shared cell goes to whichever part
+    // holds most of it, as a partial block when that is the left one.
     const [first, second] = inCell
-    if (!second || first!.n === 8) g.set(c, 0, EIGHTHS[8]!, color(first!.i))
-    else g.set(c, 0, EIGHTHS[first!.n]!, color(first!.i), color(second.i))
+    if (!second || first!.n >= second.n) g.set(c, 0, second ? EIGHTHS[8]! : EIGHTHS[first!.n === 8 ? 8 : first!.n]!, color(first!.i))
+    else g.set(c, 0, EIGHTHS[8]!, color(second.i))
   }
   // Underline the reclaimable share at the start of each part.
   parts.forEach((p, i) => {

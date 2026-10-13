@@ -22,7 +22,7 @@ test('tab 2 shows reclaimable space per project, gone ones marked', async ($, on
   expect(await pane.find({ text: /^Reclaimable by project \(top 2 of 2\)$/ })).toBeDefined()
   expect((await pane.find({ key: 'project-bars' }))?.type).toBe('Raster')
   expect(await pane.find({ text: /^\/Users\/x\/Projects\/gone \(gone\)$/ })).toBeDefined()
-  expect((await pane.find({ key: 'tab-projects' }))?.props.label).toBe('[Projects]')
+  expect((await pane.find({ key: 'tab-projects' }))?.props.variant).toBe('primary')
 })
 
 test('picking a project selects its items and cleans them with --only', async ($, on) => {

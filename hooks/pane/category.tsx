@@ -43,7 +43,7 @@ export function Category(E: El, d: CategoryData, a: CategoryActions) {
       </Box>
       <Markdown key="texts" text={`**Where it comes from** ${c.text.creates}\n\n**What Claude Code cleans itself** ${c.text.claude}\n\n**What sweep removes** ${c.text.sweep}`} />
       <Box key="category-body" flexDirection={wide ? 'row' : 'column'} gap={2}>
-        <Box key="items" flexDirection="column" flexGrow={1}>
+        <Box key="items" flexDirection="column" flexGrow={1} flexShrink={1} minWidth={0}>
           <Text bold>{`Items (${c.cleanable} of ${c.found} cleanable)`}</Text>
           {c.items.length === 0 && <Text dimColor>Nothing found.</Text>}
           {c.items.map((item) => (
@@ -59,7 +59,7 @@ export function Category(E: El, d: CategoryData, a: CategoryActions) {
             </Box>
           ))}
         </Box>
-        <Box key="ages-section" flexDirection="column" width={ageColumns}>
+        <Box key="ages-section" flexDirection="column" width={ageColumns} flexShrink={0}>
           <Text bold>Age of this space</Text>
           {ChartView(E, ages, 'ages')}
         </Box>

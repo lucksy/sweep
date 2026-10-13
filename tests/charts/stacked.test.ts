@@ -42,3 +42,9 @@ test('legend, alt and hit boxes', () => {
   expect(chart.hit?.[0]).toEqual({ x: 0, y: 0, w: 28, h: 2, id: 'worktrees' })
   expect(stacked([], 40).alt).toBe('Claude Code uses nothing here.')
 })
+
+test('the bar uses no background colors (terminals paint them taller than blocks)', () => {
+  for (const columns of [20, 57, 100]) {
+    for (const cell of grid(stacked(PARTS_IN, columns))[0]!) expect(cell.bg).toBe(0x01000000)
+  }
+})

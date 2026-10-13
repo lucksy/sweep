@@ -81,24 +81,24 @@ export function CategoryTable(E: El, d: OverviewData, a: OverviewActions) {
   return (
     <Box key="table" flexDirection="column">
       <Box>
-        <Box width={4}><Text dimColor>{' '}</Text></Box>
-        <Box width={20}><Text dimColor>Category</Text></Box>
-        <Box width={9}><Text dimColor>Risk</Text></Box>
-        <Box width={8}><Text dimColor>Size</Text></Box>
-        <Box width={9}><Text dimColor>Items</Text></Box>
+        <Box width={4} flexShrink={0}><Text dimColor>{' '}</Text></Box>
+        <Box width={20} flexShrink={0}><Text dimColor>Category</Text></Box>
+        <Box width={9} flexShrink={0}><Text dimColor>Risk</Text></Box>
+        <Box width={8} flexShrink={0}><Text dimColor>Size</Text></Box>
+        <Box width={9} flexShrink={0}><Text dimColor>Items</Text></Box>
       </Box>
       {scan.categories.filter((c) => c.found > 0 || c.reclaimableBytes > 0).map((c) => (
         <Box key={`row-${c.id}`}>
-          <Box width={4}>
+          <Box width={4} flexShrink={0}>
             {selectable(c)
               ? <Button key={`toggle-${c.id}`} plain label={d.selected.includes(c.id) ? '[x]' : '[ ]'} onPress={() => a.toggle(c.id)} />
               : <Text dimColor>{'   '}</Text>}
           </Box>
-          <Box width={20}><Text wrap="truncate-end">{c.id}</Text></Box>
-          <Box width={9}><Text color={RISK_COLOR[c.risk]}>{c.risk}</Text></Box>
-          <Box width={8}><Text>{formatBytes(c.reclaimableBytes).padStart(6)}</Text></Box>
-          <Box width={9}><Text dimColor>{`${c.cleanable}/${c.found}`.padStart(7)}</Text></Box>
-          <Box flexGrow={1}><Text dimColor wrap="truncate-end">{c.title}</Text></Box>
+          <Box width={20} flexShrink={0}><Text wrap="truncate-end">{c.id}</Text></Box>
+          <Box width={9} flexShrink={0}><Text color={RISK_COLOR[c.risk]}>{c.risk}</Text></Box>
+          <Box width={8} flexShrink={0}><Text>{formatBytes(c.reclaimableBytes).padStart(6)}</Text></Box>
+          <Box width={9} flexShrink={0}><Text dimColor>{`${c.cleanable}/${c.found}`.padStart(7)}</Text></Box>
+          <Box flexGrow={1} flexShrink={1} minWidth={0}><Text dimColor wrap="truncate-end">{c.title}</Text></Box>
           <Button key={`drill-${c.id}`} plain label="›" onPress={() => a.drill(c.id)} />
         </Box>
       ))}
@@ -115,7 +115,12 @@ export function Overview(E: El, d: OverviewData, a: OverviewActions) {
   const scan = d.scan
   const wide = isWide(d.bodyColumns)
   const width = Math.max(20, d.bodyColumns - 2)
-  const mapColumns = wide ? Math.floor(width * 0.42) : width
+  // The table needs about 76 columns beside the map; the map never squeezes it.
+  const TABLE_MIN = 76
+  const mapColumns = wide ? Math.max(24, Math.min(Math.floor(width * 0.4), width - 3 - TABLE_MIN)) : width
+  // As tall as the table beside it (its rows, header and review note), 6 to 14 rows.
+  const tableRows = scan ? scan.categories.filter((c) => c.found > 0 || c.reclaimableBytes > 0).length + 2 : 0
+  const mapRows = wide ? Math.max(6, Math.min(14, tableRows)) : 8
   return (
     <Box flexDirection="column" gap={1}>
       {Header(E, d, a)}
@@ -136,12 +141,12 @@ export function Overview(E: El, d: OverviewData, a: OverviewActions) {
       {scan && (
         <Box key="body" flexDirection={wide ? 'row' : 'column'} gap={wide ? 3 : 1}>
           {scan.totals.reclaimableBytes > 0 && (
-            <Box key="map-section" flexDirection="column" width={mapColumns}>
+            <Box key="map-section" flexDirection="column" width={mapColumns} flexShrink={0}>
               <Text bold>Reclaimable</Text>
-              {ChartView(E, reclaimTreemap(scan, mapColumns, wide ? 14 : 8, d.style), 'treemap')}
+              {ChartView(E, reclaimTreemap(scan, mapColumns, mapRows, d.style), 'treemap')}
             </Box>
           )}
-          <Box key="table-section" flexDirection="column" flexGrow={1}>
+          <Box key="table-section" flexDirection="column" flexGrow={1} flexShrink={1} minWidth={0}>
             {CategoryTable(E, d, a)}
           </Box>
         </Box>
