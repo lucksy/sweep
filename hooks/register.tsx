@@ -10,6 +10,7 @@ import { cleanArgv, formatBytes, parseClean, parseScan, progressOf, scanArgv, ta
 import { resolveStyle, type ChartStyle, type TerminalEnv } from '../charts/terminal'
 import { ago, onlyIds, projectSelection, safeIds, selectedIds, toggle, toggleItem } from './pane/model'
 import { Projects, Tabs } from './pane/projects'
+import { Project } from './pane/project'
 import { parseSweep } from './pane/command'
 import { BACKGROUND_DELAY_MS, statusText } from './alerts/status'
 import { bandFor } from './alerts/band'
@@ -37,6 +38,7 @@ const dry = atom({ plugin: 'sweep', key: 'dry' } as const, null as CleanResult |
 const freed = atom({ plugin: 'sweep', key: 'freedThisSession' } as const, 0)
 const projectFilter = atom({ plugin: 'sweep', key: 'projectFilter' } as const, null as string | null)
 const hidden = atom({ plugin: 'sweep', key: 'hidden' } as const, [] as string[])
+const focusProject = atom({ plugin: 'sweep', key: 'focusProject' } as const, null as string | null)
 const outcome = atom({ plugin: 'sweep', key: 'result' } as const, null as CleanResult | null)
 const cleaning = atom({ plugin: 'sweep', key: 'cleaning' } as const, null as { removed: number; freed: number } | null)
 const cleanError = atom({ plugin: 'sweep', key: 'cleanError' } as const, null as string | null)
@@ -299,20 +301,38 @@ export const register: Register = (on, options) => {
       })
     const currentView = await read($, view)
     const tab = (v: 'overview' | 'projects') => void update($, view, () => v)
-    const tabs = () => Tabs(E, currentView === 'projects' ? 'projects' : 'overview', { tab })
+    const tabs = () => Tabs(E, currentView === 'projects' || currentView === 'project' ? 'projects' : 'overview', { tab })
+    const projectPath = await read($, focusProject)
+    if (currentView === 'project' && result && projectPath) {
+      const { Box } = E
+      return (
+        <Box flexDirection="column" gap={1}>
+          {tabs()}
+          {Project(E, { scan: result, path: projectPath, selected: data.selected, selectedItems: data.selectedItems, bodyColumns: data.bodyColumns, style: data.style }, {
+        back: () => void update($, view, () => 'projects'),
+        selectAll: () => void (async () => {
+          const next = projectSelection(result, projectPath)
+          await update($, selected, () => next.selected)
+          await update($, selectedItems, () => next.selectedItems)
+          await update($, projectFilter, () => projectPath)
+        })(),
+        toggleItem: (categoryId, itemId) => void (async () => {
+          const next = toggleItem(result, await read($, selected), await read($, selectedItems), categoryId, itemId)
+          await update($, selected, () => next.selected)
+          await update($, selectedItems, () => next.selectedItems)
+        })(),
+        cleanBar,
+      })}
+        </Box>
+      )
+    }
     if (currentView === 'projects' && result) {
       const { Box } = E
       return (
         <Box flexDirection="column" gap={1}>
           {tabs()}
           {Projects(E, { scan: result, bodyColumns: data.bodyColumns, style: data.style }, {
-            pick: (path) => void (async () => {
-              const next = projectSelection(result, path)
-              await update($, selected, () => next.selected)
-              await update($, selectedItems, () => next.selectedItems)
-              await update($, projectFilter, () => path)
-              await update($, view, () => 'overview')
-            })(),
+            pick: (path) => void Promise.all([update($, focusProject, () => path), update($, view, () => 'project')]),
           })}
           {cleanBar() as never}
         </Box>

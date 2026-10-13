@@ -113,7 +113,7 @@ Kept 6 · reasons: created during a running session (6)
 
 ### Projects
 
-A bar list (SPEC-charts §3) of the top 15 projects by reclaimable bytes, with a stacked split by category. `exists: false` projects are marked `(gone)`. Pressing a row filters Overview to that project (`--only` = its items).
+A bar list (SPEC-charts §3) of the top 15 projects by reclaimable bytes. `exists: false` projects are marked `(gone)`. Pressing a row opens **Project detail**: Back (`b`), the path, reclaimable of found, a bar list of its space by category, each category's items of that project with ticks or the reason kept, **Select all** (`a`, which selects its items as `--only`) and the clean bar. In the overview a partly selected category shows `[~]`. (Changed 2026-10-13 after the user's first run: picking a project used to jump to the overview.)
 
 ## Clean flow (state machine)
 

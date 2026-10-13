@@ -68,7 +68,7 @@ export type CleanResult = {
 
 export type ScanStatus = 'idle' | 'scanning' | 'error'
 export type Progress = { index: number; total: number; id: string | null }
-export type View = 'overview' | 'category' | 'projects'
+export type View = 'overview' | 'category' | 'projects' | 'project'
 export type Flow = 'idle' | 'dryrun' | 'confirm' | 'cleaning' | 'done' | 'error'
 
 declare module 'claude-code' {
@@ -84,6 +84,7 @@ declare module 'claude-code' {
       selected: string[]
       selectedItems: Record<string, string[]>
       projectFilter: string | null
+      focusProject: string | null
       flow: Flow
       dry: CleanResult | null
       result: CleanResult | null

@@ -31,7 +31,7 @@ export function Projects(E: El, d: ProjectsData, a: ProjectsActions) {
   })), Math.max(40, d.bodyColumns - 2))
   return (
     <Box key="projects" flexDirection="column" gap={1}>
-      <Text bold>{`Reclaimable by project (top ${rows.length} of ${d.scan.projects.length})`}</Text>
+      <Text bold>{`Reclaimable by project: ${rows.length} with something to clean${d.scan.projects.length > rows.length ? ` (${d.scan.projects.length} seen)` : ''}`}</Text>
       {ChartView(E, chart, 'project-bars')}
       <Box key="project-list" flexDirection="column">
         {rows.map((p, i) => (

@@ -91,7 +91,7 @@ export function CategoryTable(E: El, d: OverviewData, a: OverviewActions) {
         <Box key={`row-${c.id}`}>
           <Box width={4} flexShrink={0}>
             {selectable(c)
-              ? <Button key={`toggle-${c.id}`} plain label={d.selected.includes(c.id) ? '[x]' : '[ ]'} onPress={() => a.toggle(c.id)} />
+              ? <Button key={`toggle-${c.id}`} plain label={!d.selected.includes(c.id) ? '[ ]' : d.selectedItems[c.id] ? '[~]' : '[x]'} onPress={() => a.toggle(c.id)} />
               : <Text dimColor>{'   '}</Text>}
           </Box>
           <Box width={20} flexShrink={0}><Text wrap="truncate-end">{c.id}</Text></Box>
