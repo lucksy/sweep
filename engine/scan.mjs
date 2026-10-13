@@ -6,6 +6,7 @@ import path from 'node:path';
 
 import { CATEGORIES } from './categories/index.mjs';
 import { fmt, itemId, readJson } from './fsx.mjs';
+import { ageBuckets, bigTmpFiles, computeWarnings, disk, footprint, rollupProjects, settingsState, worktreeCounts } from './footprint.mjs';
 
 export const SCHEMA = 1;
 const VERSION = readJson(new URL('../.claude-plugin/plugin.json', import.meta.url))?.version ?? '0.0.0';
@@ -68,6 +69,7 @@ export async function scan(ctx, { ids = null, options = {} } = {}) {
   const categories = [];
   for (const cat of CATEGORIES.filter((c) => !ids || ids.includes(c.id))) categories.push(await scanCategory(ctx, cat));
   const sum = (list, pick) => list.reduce((t, x) => t + pick(x), 0);
+  const diskNow = disk(ctx.home);
   return {
     schema: SCHEMA,
     tool: { name: 'sweep', version: VERSION },
@@ -80,7 +82,12 @@ export async function scan(ctx, { ids = null, options = {} } = {}) {
       safeBytes: sum(categories.filter((c) => c.risk === 'safe'), (c) => c.reclaimableBytes),
       keptBytes: sum(categories, (c) => c.foundBytes - c.reclaimableBytes),
     },
+    disk: diskNow,
+    footprint: await footprint(ctx),
     categories,
+    projects: rollupProjects(categories),
+    ageBuckets: ageBuckets(categories),
+    warnings: computeWarnings({ disk: diskNow, bigFiles: bigTmpFiles(ctx), settingsState: settingsState(ctx.claudeDir), worktreeCounts: worktreeCounts(ctx) }),
     info: info(ctx),
   };
 }

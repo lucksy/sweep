@@ -117,23 +117,25 @@ Make `scan --json` emit the schema-1 contract (SPEC-engine §Contract). Add `rea
 **Notes:** Items kept for a running session (temp folders, transcripts, checkpoints, the running CLI's bundled skills) are now listed with their reason instead of skipped; on this machine tmp-sessions shows 93/101 where clearx showed 93/93. Category scans are async so T6 can size in parallel. git worktree removal is checked by the guard first (ctx.check).
 
 ## Task 5: Footprint, disk, per-project rollup, age buckets, warnings
-**Status:** todo
+**Status:** done · started 2026-10-13 · done 2026-10-13
 
 **Description:** Add the contract fields `footprint`, `disk`, `projects`, `ageBuckets` and `warnings`: `runaway-output`, `low-disk`, `sweep-paused` and `many-worktrees` (SPEC-engine §Footprint, §Contract).
 
 **Acceptance criteria:**
-- [ ] Footprint parts sum to `totalBytes` in the fixture
-- [ ] Each warning has a fixture case that produces it and one that doesn't
-- [ ] Projects roll up per category, and `exists: false` is set for a deleted path
+- [x] Footprint parts sum to `totalBytes` in the fixture
+- [x] Each warning has a fixture case that produces it and one that doesn't
+- [x] Projects roll up per category, and `exists: false` is set for a deleted path
 
 **Verification:**
-- [ ] `node --test "tests/engine/*.test.mjs"footprint.test.mjs`
+- [x] `node --test "tests/engine/*.test.mjs"footprint.test.mjs`
 
 **Dependencies:** T4
 
 **Files likely touched:** `engine/footprint.mjs`, `engine/scan.mjs`, `tests/engine/footprint.test.mjs`, `tests/fixtures/sandbox.mjs`
 
 **Estimated scope:** M
+
+**Notes:** Real machine: footprint 7.42G (worktrees 2.75G, plugins 2.08G, transcripts 1.37G), disk 1.1T free, no warnings. The extra measuring pushed a full scan to 93 s; T6 brings it down.
 
 ## Task 6: Scan speed: async sizes, memoized, ≤ 15 s
 **Status:** todo

@@ -16,7 +16,7 @@ const keys = (o) => Object.keys(o).sort();
 
 test('scan --json is the schema-1 contract', () => {
   const r = scan();
-  assert.deepEqual(keys(r), ['categories', 'durationMs', 'host', 'info', 'options', 'scannedAt', 'schema', 'tool', 'totals']);
+  assert.deepEqual(keys(r), ['ageBuckets', 'categories', 'disk', 'durationMs', 'footprint', 'host', 'info', 'options', 'projects', 'scannedAt', 'schema', 'tool', 'totals', 'warnings']);
   assert.equal(r.schema, 1);
   assert.equal(r.tool.name, 'sweep');
   assert.match(r.tool.version, /^\d+\.\d+\.\d+$/);
