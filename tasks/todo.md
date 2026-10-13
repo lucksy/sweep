@@ -328,7 +328,7 @@ Remove the old `skills/list` and `skills/clearx`.
 - [ ] Human reviews chart snapshots (cells) and one pixel PNG
 
 ## Task 14: Pane Overview: cached and live scan, header, category table, layouts, text fallback
-**Status:** todo
+**Status:** done · started 2026-10-13 · done 2026-10-13
 
 **Description:** Build on the T2 spike:
 - `engine-client.ts` with `$.process.spawn`, NDJSON progress and the schema check
@@ -338,20 +338,22 @@ Remove the old `skills/list` and `skills/clearx`.
 - the text fallback when the pane isn't placed (< 110 columns)
 
 **Acceptance criteria:**
-- [ ] With a scan already in this session's `$.state`, the first draw needs no engine call; with none, the progress view draws at once
-- [ ] No call to `$.store` or `$.fs.write` (spy test)
-- [ ] Progress state updates per category during a scan; a second request joins the running scan
-- [ ] Render tests at 200, 144 and 110 columns; below 110, `/sweep` answers with text
+- [x] With a scan already in this session's `$.state`, the first draw needs no engine call; with none, the progress view draws at once
+- [x] No call to `$.store` or `$.fs.write` (spy test)
+- [x] Progress state updates per category during a scan; a second request joins the running scan
+- [x] Render tests at 200, 144 and 110 columns; below 110, `/sweep` answers with text
 
 **Verification:**
-- [ ] `claude plugin test .` and `npx -p typescript tsc -p .`
-- [ ] Manual: `/sweep`
+- [x] `claude plugin test .` and `npx -p typescript tsc -p .`
+- [ ] Manual: `/sweep` (Checkpoint D)
 
 **Dependencies:** T2, T7
 
 **Files likely touched:** `hooks/engine-client.ts`, `hooks/pane/overview.tsx`, `hooks/pane/layout.ts`, `types/index.d.ts`, `hooks/pane.test.ts`
 
 **Estimated scope:** M
+
+**Notes:** Views are pure functions in hooks/pane/ that receive the surface's elements, the data and callbacks; register.tsx makes every $ call. The scan streams through $.process.spawn with NDJSON progress; a second request joins the one in flight; a scan in this session younger than 10 minutes is reused. The manual /sweep check moves to Checkpoint D.
 
 ## Task 15: Pane charts: footprint bar, treemap, bars; cells or pixels
 **Status:** todo

@@ -14,6 +14,8 @@ export type Engine = {
   exitCode?: number
   /** NDJSON progress lines the scan writes to stderr. */
   progress?: unknown[]
+  /** Holds every spawned engine after its progress until the test calls release(). */
+  hold?: boolean
 }
 
 export function world(on: On, engine: Engine = {}, env: Record<string, string> = {}) {
@@ -23,7 +25,10 @@ export function world(on: On, engine: Engine = {}, env: Record<string, string> =
     status: [] as (string | undefined)[],
     toasts: [] as string[],
     runs: [] as string[][],
+    spawns: [] as string[][],
     writes: [] as string[],
+    stored: [] as string[],
+    release: () => {},
     placed: true,
   }
   const answer = (argv: readonly string[]) =>
@@ -33,9 +38,12 @@ export function world(on: On, engine: Engine = {}, env: Record<string, string> =
     seen.runs.push([...e.argv])
     return { value: { exitCode: engine.exitCode ?? 0, stdout: answer(e.argv), stderr: '', isStdoutTruncated: false, isStderrTruncated: false } }
   })
+  const gate = engine.hold ? new Promise<void>((resolve) => { seen.release = resolve }) : Promise.resolve()
   on('process.spawn', async function* (_$, e) {
     seen.runs.push([...e.argv])
+    seen.spawns.push([...e.argv])
     for (const line of engine.progress ?? []) yield { stream: 'stderr' as const, text: `${JSON.stringify(line)}\n` }
+    await gate
     yield { stream: 'stdout' as const, text: answer(e.argv) }
     return { value: { code: engine.exitCode ?? 0, signal: null } }
   })
@@ -59,10 +67,13 @@ export function world(on: On, engine: Engine = {}, env: Record<string, string> =
     seen.writes.push(e.path)
     return { value: undefined }
   })
+  on('store.set', (_$, e) => {
+    seen.stored.push(String((e as { key?: string }).key))
+    return { value: undefined } as never
+  })
   on('session.start', (_$, e) => ({ cwd: e.cwd }) as never)
   mock.env(on, env)
   const clock = mock.clock(on, { now: Date.parse('2026-10-13T12:00:00Z') })
-  mock.store(on, {})
   return Object.assign(seen, { clock })
 }
 
