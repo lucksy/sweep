@@ -548,7 +548,7 @@ Remove the old `skills/list` and `skills/clearx`.
 **Notes:** The Bash hook on tool.call only reads the result after next(e) and has a .catch that replays the settled result, so it can never deny, change or re-run a tool call. A skill clean also adds to 'freed this session'.
 
 ## Task 23: README, clearx retirement, full verification
-**Status:** todo
+**Status:** done · started 2026-10-13 · done 2026-10-13
 
 **Description:**
 - README: install, `/sweep`, skills, CLI, categories, safety, settings, prevention tips, uninstalling clearx (Q4).
@@ -556,19 +556,21 @@ Remove the old `skills/list` and `skills/clearx`.
 - Run every SPEC.md success criterion and record the evidence.
 
 **Acceptance criteria:**
-- [ ] Each of the 9 SPEC.md success criteria has recorded evidence (output, timing or screenshot note)
-- [ ] `clearx/` removed, with no reference to it left except the README's uninstall note
-- [ ] Clean install from the local marketplace works in a fresh session
+- [ ] Each of the 9 SPEC.md success criteria has recorded evidence (output, timing or screenshot note) (SC1 manual look and SC3 real clean wait for Checkpoint D)
+- [x] `clearx/` removed, with no reference to it left except the README's uninstall note
+- [x] Clean install from the local marketplace works in a fresh session
 
 **Verification:**
-- [ ] `node --test "tests/**/*.test.mjs"`, `claude plugin test .`, `claude plugin validate --strict .`, `npx -p typescript tsc -p .`
-- [ ] `claude plugin marketplace add ~/Projects/clear && claude plugin install sweep@sweep`, then `/sweep`
+- [x] `node --test "tests/**/*.test.mjs"`, `claude plugin test .`, `claude plugin validate --strict .`, `npx -p typescript tsc -p .`
+- [x] `claude plugin marketplace add ~/Projects/clear && claude plugin install sweep@sweep`, then `/sweep`
 
 **Dependencies:** T13, T19, T22
 
 **Files likely touched:** `README.md`, `clearx/` (deleted)
 
 **Estimated scope:** S
+
+**Notes:** Evidence, 2026-10-13. SC1: cold full scans 11.8/11.0/11.4 s (T6), warm 3.3 s; the pane draws a session's scan without the engine and shows live progress otherwise (tests/mod/pane.test.ts) — manual look pending (Checkpoint D). SC2: one contract feeds pane, CLI, skills and status line (types/index.d.ts, contract.test.mjs). SC3: needs the real clean at Checkpoint D. SC4: sandbox.test.mjs, reasons.test.mjs, clean.test.mjs. SC5: band.test.ts. SC6: toasts.test.ts. SC7: node --test 40/40, claude plugin test 77/77, validate --strict passed, tsc clean. SC8: charts-pane.test.ts (cells, pixels, desktop text). SC9: clean.test.mjs 'scan writes nothing, and clean only deletes', pane.test.ts and alerts.test.ts spy on $.store and $.fs.write. Install from the local marketplace verified in an isolated CLAUDE_CONFIG_DIR (sweep@sweep 0.2.0, read from this folder); your real config untouched. clearx/ removed (in git history; it was never installed).
 
 ## Checkpoint: Complete
 - [ ] All SPEC.md success criteria met with evidence

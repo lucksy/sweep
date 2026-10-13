@@ -112,29 +112,28 @@ The project folder is `~/Projects/clear`, and the plugin root is this folder (us
   .claude-plugin/
     plugin.json                  → name "sweep", userConfig, types contract
     marketplace.json             → local marketplace "sweep" (source "./")
-  engine/                        → module: engine (zero-dependency Node ESM)
-    sweep.mjs                    → entry: argument parsing → cli (module: cli)
+  engine/                        → modules engine + cli (zero-dependency Node ESM)
+    sweep.mjs                    → CLI entry: arguments, exit codes
     scan.mjs, clean.mjs          → scan(), clean() and the JSON contract
-    categories/<id>.mjs          → one file per category
-    guard.mjs                    → rm() allowlist and protected paths
-    git.mjs, live.mjs, fsx.mjs   → git worktree logic, live sessions, sizes and ages
-    footprint.mjs
-    text.mjs                     → module: cli (text rendering)
+    categories/<id>.mjs, index.mjs → one file per category, in report order
+    guard.mjs                    → the one door for deletions
+    context.mjs, git.mjs, projects.mjs, fsx.mjs, footprint.mjs, platform.mjs
+    text.mjs                     → the text report (pure)
   bin/sweep                      → shell shim
   skills/{scan,clean,explain}/SKILL.md   → module: skills
   charts/                        → module: charts (pure TypeScript)
-    raster.ts, png.ts, stacked.ts, treemap.ts, bars.ts, histogram.ts, palette.ts
+    palette.ts, format.ts, raster.ts, bars.ts, stacked.ts, treemap.ts, histogram.ts, png.ts, pixels.ts, terminal.ts
   hooks/
     hooks.json                   → { "modules": ["./register.tsx"] }
-    register.tsx                 → mod entry: wires pane + alerts
-    pane/*.tsx                   → module: pane
-    alerts/*.ts                  → module: alerts
-    engine-client.ts             → runs the engine from the mod, parses the contract
-    *.test.ts                    → claude plugin test
-  types/index.d.ts               → PluginState contract ($.state values)
+    register.tsx                 → the mod: every $ call (pane, alerts, engine runs)
+    engine-client.ts             → argv builders and parsers (pure)
+    pane/                        → module: pane (model, overview, charts, clean, category, projects, command)
+    alerts/                      → module: alerts (status, band, toasts)
+  types/index.d.ts               → schema-1 contract and the session state
   tests/
     fixtures/sandbox.mjs         → builds a fake HOME, ~/.claude, tmp and git repo
-    engine/*.test.mjs, cli/*.test.mjs, charts/*.test.ts
+    engine/*.test.mjs, cli/*.test.mjs   → node --test "tests/**/*.test.mjs"
+    charts/*.test.ts, mod/*.test.ts     → claude plugin test .
 ```
 
 ## Code Style
