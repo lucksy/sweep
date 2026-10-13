@@ -1,0 +1,8 @@
+{
+  "name": "sweep",
+  "description": "sweep: see and clean storage Claude Code leaves behind.",
+  "owner": { "name": "lucksy" },
+  "plugins": [
+    { "name": "sweep", "source": "./", "description": "See and clean storage Claude Code leaves behind." }
+  ]
+}

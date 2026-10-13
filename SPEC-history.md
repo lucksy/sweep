@@ -1,6 +1,7 @@
 ---
-status: draft
+status: approved
 created: 2026-10-13
+approved: 2026-10-13
 module: history
 ---
 

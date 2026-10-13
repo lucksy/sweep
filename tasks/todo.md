@@ -6,12 +6,12 @@ created: 2026-10-13
 # Tasks: sweep
 
 Paths are relative to the project root, `~/Projects/clear` (no rename). sweep stores no data: no task may add a cache, history, lock or log file, or use `$.store`. Unless a task says otherwise, every task is verified with:
-- `node --test tests/`
+- `node --test "tests/**/*.test.*"`
 - `claude plugin validate --strict .`
 - for tasks that touch `hooks/` or `charts/`: `npx -p typescript tsc -p .` and `claude plugin test .`
 
 ## Task 1: Scaffold sweep from clearx and add the sandbox test harness
-**Status:** todo
+**Status:** done · started 2026-10-13 · done 2026-10-13
 
 **Description:** In this folder, create the sweep plugin from clearx without changing behavior:
 - move `clearx/scripts/clearx.mjs` to `engine/sweep.mjs`
@@ -22,19 +22,21 @@ Paths are relative to the project root, `~/Projects/clear` (no rename). sweep st
 Then turn the clearx sandbox script into `tests/fixtures/sandbox.mjs`, with the first integration test reproducing the clearx sandbox run. Leave `clearx/` in place until T23.
 
 **Acceptance criteria:**
-- [ ] `bin/sweep scan` prints the same categories and numbers as `clearx list` on this machine
-- [ ] `tests/fixtures/sandbox.mjs` builds the fixture (dirty, unique-commit, clean and orphan worktrees; merged and unique branches; memory; protected files), and `tests/engine/sandbox.test.mjs` asserts what clean keeps and removes
-- [ ] `claude plugin validate --strict .` passes for `sweep`
+- [x] `bin/sweep scan` prints the same categories and numbers as `clearx list` on this machine
+- [x] `tests/fixtures/sandbox.mjs` builds the fixture (dirty, unique-commit, clean and orphan worktrees; merged and unique branches; memory; protected files), and `tests/engine/sandbox.test.mjs` asserts what clean keeps and removes
+- [x] `claude plugin validate --strict .` passes for `sweep`
 
 **Verification:**
-- [ ] `node --test tests/`
-- [ ] `bin/sweep scan` vs `clearx/bin/clearx list` (diff of category rows)
+- [x] `node --test "tests/**/*.test.*"`
+- [x] `bin/sweep scan` vs `clearx/bin/clearx list` (diff of category rows)
 
 **Dependencies:** None
 
 **Files likely touched:** `.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json`, `engine/sweep.mjs`, `bin/sweep`, `tests/fixtures/sandbox.mjs`, `tests/engine/sandbox.test.mjs`
 
 **Estimated scope:** M
+
+**Notes:** Built in `~/Projects/clear` (no rename). `sweep scan` and `clearx list` category rows are identical on this machine (2026-10-13). `node --test tests/` needs a glob on Node 22, so docs now say `node --test "tests/**/*.test.*"`.
 
 ## Task 2: Mod spike: `/sweep` shows the engine's total in a pane
 **Status:** todo
@@ -77,7 +79,7 @@ While doing it, answer Q1–Q3 from `claude-code.d.ts` and a quick experiment, a
 - [ ] Allowed paths are removed
 
 **Verification:**
-- [ ] `node --test tests/engine/guard.test.mjs`
+- [ ] `node --test "tests/engine/*.test.*"guard.test.mjs`
 
 **Dependencies:** T1
 
@@ -100,7 +102,7 @@ Make `scan --json` emit the schema-1 contract (SPEC-engine §Contract). Add `rea
 - [ ] Item ids are identical across two scans of an unchanged fixture
 
 **Verification:**
-- [ ] `node --test tests/engine/`
+- [ ] `node --test "tests/engine/*.test.*"`
 
 **Dependencies:** T3
 
@@ -119,7 +121,7 @@ Make `scan --json` emit the schema-1 contract (SPEC-engine §Contract). Add `rea
 - [ ] Projects roll up per category, and `exists: false` is set for a deleted path
 
 **Verification:**
-- [ ] `node --test tests/engine/footprint.test.mjs`
+- [ ] `node --test "tests/engine/*.test.*"footprint.test.mjs`
 
 **Dependencies:** T4
 
@@ -142,7 +144,7 @@ Measure on this machine: baseline 28–43 s, target ≤ 15 s.
 - [ ] Three real-machine runs at ≤ 15 s each, with the timings recorded in this task
 
 **Verification:**
-- [ ] `node --test tests/engine/`
+- [ ] `node --test "tests/engine/*.test.*"`
 - [ ] `time bin/sweep scan --json > /dev/null` ×3
 
 **Dependencies:** T5
@@ -166,7 +168,7 @@ Measure on this machine: baseline 28–43 s, target ≤ 15 s.
 - [ ] `--progress` writes only NDJSON to stderr, and stdout stays pure JSON
 
 **Verification:**
-- [ ] `node --test tests/engine/clean.test.mjs`
+- [ ] `node --test "tests/engine/*.test.*"clean.test.mjs`
 
 **Dependencies:** T4
 
@@ -196,7 +198,7 @@ Measure on this machine: baseline 28–43 s, target ≤ 15 s.
 - [ ] `--json` output equals the engine result, with nothing else on stdout
 
 **Verification:**
-- [ ] `node --test tests/cli/`
+- [ ] `node --test "tests/cli/*.test.*"`
 
 **Dependencies:** T5, T7
 
@@ -224,7 +226,7 @@ Removed 2026-10-13: sweep stores no data (SPEC-history.md). Kept as a number onl
 - [ ] Palette colors pass ≥ 3:1 contrast on dark and light backgrounds
 
 **Verification:**
-- [ ] `node --test tests/charts/` and `npx -p typescript tsc -p .`
+- [ ] `node --test "tests/charts/*.test.*"` and `npx -p typescript tsc -p .`
 
 **Dependencies:** T1
 
@@ -243,7 +245,7 @@ Removed 2026-10-13: sweep stores no data (SPEC-history.md). Kept as a number onl
 - [ ] Snapshot tests of decoded cells for fixed inputs
 
 **Verification:**
-- [ ] `node --test tests/charts/`
+- [ ] `node --test "tests/charts/*.test.*"`
 
 **Dependencies:** T10
 
@@ -264,7 +266,7 @@ Removed 2026-10-13: sweep stores no data (SPEC-history.md). Kept as a number onl
 - [ ] Each pixel chart has the same `legend` and `alt` as its cell twin
 
 **Verification:**
-- [ ] `node --test tests/charts/`
+- [ ] `node --test "tests/charts/*.test.*"`
 
 **Dependencies:** T11
 
@@ -519,7 +521,7 @@ Remove the old `skills/list` and `skills/clearx`.
 - [ ] Clean install from the local marketplace works in a fresh session
 
 **Verification:**
-- [ ] `node --test tests/`, `claude plugin test .`, `claude plugin validate --strict .`, `npx -p typescript tsc -p .`
+- [ ] `node --test "tests/**/*.test.*"`, `claude plugin test .`, `claude plugin validate --strict .`, `npx -p typescript tsc -p .`
 - [ ] `claude plugin marketplace add ~/Projects/clear && claude plugin install sweep@sweep`, then `/sweep`
 
 **Dependencies:** T13, T19, T22

@@ -1,6 +1,7 @@
 ---
-status: draft
+status: approved
 created: 2026-10-13
+approved: 2026-10-13
 ---
 
 # Spec: sweep
@@ -88,7 +89,7 @@ node engine/sweep.mjs clean safe              # dry run
 node engine/sweep.mjs clean worktrees --yes   # delete
 
 # test
-node --test tests/                            # engine, cli, charts (node:test)
+node --test "tests/**/*.test.*"                            # engine, cli, charts (node:test)
 claude plugin test .                          # mod hooks: pane, alerts (hooks/*.test.ts)
 
 # check
@@ -173,7 +174,7 @@ User-facing text is plain and specific: "2 worktrees, 2.7G, nothing unsaved". It
 
 | Level | What | Where | Runner |
 |---|---|---|---|
-| Unit | categories, guard, footprint, text rendering, chart renderers | `tests/<module>/*.test.*` | `node --test tests/` |
+| Unit | categories, guard, footprint, text rendering, chart renderers | `tests/<module>/*.test.*` | `node --test "tests/**/*.test.*"` |
 | Integration (sandbox) | full `scan` and `clean --yes` against a generated fake HOME, `~/.claude`, tmp root and git repo (dirty, unique-commit, clean and orphan worktrees; merged and unique branches; memory; protected files) | `tests/engine/sandbox.test.mjs` | `node --test` |
 | Mod | pane render trees per state, clean state machine, band thresholds, status text, toast on clean events, no writes via `$.store` / `$.fs.write` | `hooks/*.test.ts` | `claude plugin test .` |
 | Manual | `/sweep` in Ghostty or kitty (pixels) and in Terminal.app (cells), at 110, 144 and 200 columns | — | checklist in SPEC-pane |
@@ -216,7 +217,7 @@ Rules:
 5. With 5 GB or more reclaimable, or less than 10% disk free, the band appears above the prompt after the session's background scan, and stays hidden for the session once you hide it.
 6. A temp task-output file over 5 GB triggers a toast on the session's background scan.
 9. sweep writes no files of its own and nothing to `$.store`: after a scan and a clean, no new path exists under the plugin data dir, the tmp root or HOME (sandbox test).
-7. `claude plugin validate --strict .`, `node --test tests/` and `claude plugin test .` pass.
+7. `claude plugin validate --strict .`, `node --test "tests/**/*.test.*"` and `claude plugin test .` pass.
 8. In a terminal without pixel support, every chart draws as cells. On a surface without `Raster`, every chart has a text equivalent.
 
 ## Open Questions

@@ -1,6 +1,7 @@
 ---
-status: draft
+status: approved
 created: 2026-10-13
+approved: 2026-10-13
 ---
 
 # Implementation Plan: sweep
@@ -47,7 +48,7 @@ Details, acceptance criteria and verification for each task are in `tasks/todo.m
 - [ ] T2: Mod spike: `/sweep` shows the engine's total in a pane (answers Q1–Q3)
 
 ### Checkpoint A: Foundation
-- [ ] `node --test tests/` green; `claude plugin validate --strict .` passes; `/sweep` opens a pane with a real number; Q1–Q3 answered in this file
+- [ ] `node --test "tests/**/*.test.*"` green; `claude plugin validate --strict .` passes; `/sweep` opens a pane with a real number; Q1–Q3 answered in this file
 
 ### Phase 1: Engine
 - [ ] T3: Guard rails as their own module, with tests that try to break them
